@@ -1,1 +1,1 @@
-
+nécessite l'installation de python et de streamlit. lancement via  **streamlit run affichage.py
