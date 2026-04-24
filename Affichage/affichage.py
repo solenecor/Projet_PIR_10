@@ -78,7 +78,7 @@ with st.container(height=490):
         
     for method, x_event in detection_times.items():
         if method in selected:
-            y_point = np.interp(x_event, time, data[method])
+            y_point = np.interp(x_event, time, data["Raw trace"])
             fig.add_annotation(
                 x=x_event,
                 y=y_point,
