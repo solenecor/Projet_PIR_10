@@ -33,7 +33,7 @@ def lecture_mseed(f_mseed):
             trace_data.append(trace_entry)
     return trace_data
 
-### Affichage des informations lues, pour chaque axes du capteur :
+### Affichage simpliste des informations lues, pour chaque axes du capteur :
 def affichage_simple_traces(trace_data):
     for trace in trace_data:
                 nslc = trace["network_station_location_channel"]
