@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 input_file = "event.mseed"
 
 ### Lecture du fichier MiniSEED et extraction des données sous format Numpy, avec organisation des informations de trace dans une liste de dictionnaires
+# On parcourt chaque direction du capteur, au cas où on a un capteur avec plusieurs axes
 mstl = MS3TraceList(input_file, record_list=True)
 trace_data = []
 
@@ -25,7 +26,7 @@ for trace_id in mstl:
         trace_data.append(trace_entry)
 
 
-### Affichage des informations lues :
+### Affichage des informations lues, pour chaque axes du capteur :
 for trace in trace_data:
         nslc = trace["network_station_location_channel"]
         data = trace["data_samples"]
