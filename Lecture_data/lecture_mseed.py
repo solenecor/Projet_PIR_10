@@ -2,7 +2,6 @@ from pymseed import MS3TraceList, sourceid2nslc
 from numpy import *
 import matplotlib.pyplot as plt
 
-input_file = "event1.mseed"
 
 def lecture_mseed(f_mseed):
     """
@@ -34,32 +33,32 @@ def lecture_mseed(f_mseed):
             trace_data.append(trace_entry)
     return trace_data
 
+### Affichage des informations lues, pour chaque axes du capteur :
+def affichage_simple_traces(trace_data):
+    for trace in trace_data:
+                nslc = trace["network_station_location_channel"]
+                data = trace["data_samples"]
+
+                print(f"Trace {trace['source_id']}, NSLC: {nslc[0]}.{nslc[1]}.{nslc[2]}.{nslc[3]}")
+                print(f"  Time: {trace['start_time']} to {trace['end_time']}")
+                print(f"  Sample rate: {trace['sample_rate_hz']} Hz")
+                print(f"  Samples: {trace['num_samples']:,}")
+
+                # Statistiques basiques sur les données :
+                print(f"  Data range: {min(data):.2f} to {max(data):.2f}")
+                print(f"  Mean: {mean(data):.2f}, Std: {std(data):.2f}")
+                print()
 
 
+                # Affichage avec matplotlib
+                x = linspace(0, trace['num_samples']*trace['sample_rate_hz'], num=trace['num_samples'])
+                y = trace["data_samples"]
+                plt.plot(x,y)
+                plt.show()
 
 
-## Affichage des informations lues, pour chaque axes du capteur :
-
-trace_data = lecture_mseed(input_file)
-
-for trace in trace_data:
-            nslc = trace["network_station_location_channel"]
-            data = trace["data_samples"]
-
-            print(f"Trace {trace['source_id']}, NSLC: {nslc[0]}.{nslc[1]}.{nslc[2]}.{nslc[3]}")
-            print(f"  Time: {trace['start_time']} to {trace['end_time']}")
-            print(f"  Sample rate: {trace['sample_rate_hz']} Hz")
-            print(f"  Samples: {trace['num_samples']:,}")
-
-            # Statistiques basiques sur les données :
-            print(f"  Data range: {min(data):.2f} to {max(data):.2f}")
-            print(f"  Mean: {mean(data):.2f}, Std: {std(data):.2f}")
-            print()
-
-
-            # Affichage avec matplotlib
-            x = linspace(0, trace['num_samples']*trace['sample_rate_hz'], num=trace['num_samples'])
-            y = trace["data_samples"]
-            plt.plot(x,y)
-            plt.show()
+if __name__ == "__main__":
+    input_file = "event1.mseed"
+    trace_data = lecture_mseed(input_file)
+    affichage_simple_traces(trace_data)
             
