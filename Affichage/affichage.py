@@ -1,5 +1,5 @@
 import streamlit as st
-import random
+from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -10,12 +10,16 @@ import os
 # Pour trouver un fichier qui n'est pas sous le dossier actuel
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from Analyse.STA_LTA.implementation import detection_STA_LTA
+from Lecture_data.lecture_mseed import lecture_mseed
 
+
+
+
+# AFFICHAGE GENERAL
 
 # utilise toute la largeur de la page
 st.set_page_config(layout="wide")
 
-# affichage
 st.markdown("""
     <style>
         /* Container principal */
@@ -45,26 +49,59 @@ st.markdown("""
 
 st.title("Detection of the first arrival on a seismic trace")
 
-# données
-sta_lta_detection_index, sta_list, lta_list, trace = detection_STA_LTA()
 
-sampling_rate = 100
-time = np.arange(len(trace)) / sampling_rate
 
-data = {"Raw trace" : trace, "Denoised trace" : [0]*4500, "STA" : sta_list, "LTA" : lta_list , "MER" : [0]*4500, "IMER" : [0]*4500}
-detection_times = {"STA/LTA" : sta_lta_detection_index / sampling_rate , "MER" : 3.7, "IMER" : 3.4}
+
+
+
+# DONNEES
+
+    # TRACE
+trace_file = "../event.mseed"
+
+data_trace = lecture_mseed(trace_file)
+trace = data_trace[0]["data_samples"]
+sample_rate = data_trace[0]["sample_rate_hz"]
+
+start_str = data_trace[0]["start_time"]
+
+
+    # AXE DES X 
+
+# on convertit la date en datetime
+start_dt = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
+time = [start_dt + timedelta(seconds=i/sample_rate) for i in range(len(trace))]
+
+
+    # STA/LTA
+sta_duration = 1
+lta_duration = 10
+sta_lta_threshold = 3
+ns = int(sta_duration * sample_rate)
+nl = int(lta_duration * sample_rate)
+sta_lta_detection_index, sta_list, lta_list = detection_STA_LTA(trace, ns, nl, sta_lta_threshold)
+
+    # REGROUPEMENT
+data = {"Raw trace" : trace, "Denoised trace" : [0]*len(trace), "STA" : sta_list, "LTA" : lta_list , "MER" : [0]*len(trace), "IMER" : [0]*len(trace)}
+detection_times = {"STA/LTA" : start_dt + timedelta(seconds=sta_lta_detection_index / sample_rate) , "MER" : start_dt + timedelta(seconds=3.7), "IMER" : start_dt + timedelta(seconds=3.4)}
 clustering_results = {"STA/LTA" : "Earthquake" , "MER" : "Earthquake", "IMER" : "Rainfall"}
 
-# différentes données affichables 
+    # DIFFERENTES DONNEES AFFICHABLES
 data_types = ["Raw trace", "Denoised trace", "STA/LTA", "MER", "IMER"]
-selected = ["Raw trace"]
+selected = []
+
+
+
+
+
+
+# 1ER ENCADRÉ (CHECKBOXES)
 
 with st.container(height=110):
     st.markdown("**Displayed data :**")
 
         # On crée autant de colonnes que de données à afficher
     cols = st.columns(len(data_types))
-
 
     for i, type in enumerate(data_types):
         # On place chaque checkbox dans une colonne 
@@ -73,9 +110,17 @@ with st.container(height=110):
         else:
             cols[i].checkbox(type, key=type, value=False)
 
+
+# pour qu'au départ raw trace apparaisse par défaut
+if not selected and "Raw trace" not in st.session_state:
+    selected = ["Raw trace"]
+
+
 for type in data_types:
     if st.session_state.get(type, True):
         selected.append(type)
+
+
 
 # Mise sous forme de DataFrame 
 df = pd.DataFrame(data)
@@ -88,11 +133,33 @@ for i, type in enumerate(data_types):
     color = px.colors.qualitative.Prism[i % len(px.colors.qualitative.Prism)]
     colors[type] = color
 
-# affichage du graphique
+
+
+
+
+
+
+# 2EME ENCADRÉ (GRAPHE)
+
 with st.container(height=490):
 
-    fig = make_subplots(specs=[[{"secondary_y": True}]]) # on met un axe y secondaire
-    y1_max = 2050
+    fig = make_subplots(specs=[[{"secondary_y": True}]]) # True pour mettre un axe y secondair
+
+    # on fait en sorte que l'axe reste même quand les données associées ne sont pas visibles et que la légede aussi
+    fig.add_trace(
+        go.Scatter(
+            x=[df["time"].iloc[0]], 
+            y=[None], 
+            mode='markers', 
+            marker=dict(color='rgba(0,0,0,0)'),
+            name="No data selected" if not selected else "",
+            showlegend=True
+        ), 
+        secondary_y=True
+    )
+
+
+    y1_max = 100
     y2_max = 30
     fig.update_yaxes(range=[-y1_max, y1_max], secondary_y=False)
     fig.update_yaxes(range=[-y2_max, y2_max], secondary_y=True)
@@ -105,19 +172,26 @@ with st.container(height=490):
             is_secondary = type not in ['Raw trace', 'Denoised trace']
             
             if type == "STA/LTA":
-                # On trace les deux fenêtres si STA/LTA est coché
-                sub_types = ["STA", "LTA"]
-                for sub in sub_types:
-                    is_sta = (sub == "STA")
-                    fig.add_trace(go.Scatter(
-                        x=df["time"], 
-                        y=df[sub], 
-                        name="STA/LTA",
-                        legendgroup="STA/LTA",
-                        showlegend=is_sta, # pour afficher une seule fois la légende
-                        line=dict(dash='dash' if sub == 'LTA' else 'solid', color=colors["STA/LTA"]),
-                        mode='lines'
-                    ), secondary_y=True)
+
+                if sta_lta_detection_index != -1: # si il y a bien une détection
+
+                    # On trace les deux fenêtres si STA/LTA est coché
+                    sub_types = ["STA", "LTA"]
+                    for sub in sub_types:
+                        is_sta = (sub == "STA")
+                        fig.add_trace(go.Scatter(
+                            x=df["time"], 
+                            y=df[sub], 
+                            name="STA/LTA",
+                            legendgroup="STA/LTA",
+                            showlegend=is_sta, # pour afficher une seule fois la légende
+                            line=dict(dash='dash' if sub == 'LTA' else 'solid', color=colors["STA/LTA"]),
+                            mode='lines'
+                        ), secondary_y=True
+                        )
+                else:
+                    continue
+
 
             else:
 
@@ -133,53 +207,44 @@ with st.container(height=490):
 
     if 'Raw trace' in selected:
         arrowsize = 100
+        time_numeric = [t.timestamp() for t in time] # temps de la trace en format numérique pour numpy
         for method, x_event in detection_times.items():
-            y_point = np.interp(x_event, time, data["Raw trace"])
-            fig.add_annotation(
-                x=x_event,
-                y=y_point,
-                text=f"Detection time {method} : {x_event} s",
-                showarrow=True,
-                arrowhead=2,
-                arrowwidth=1,
-                arrowcolor= 'white',
-                ax=0,
-                ay=arrowsize,
-                font=dict(color=colors[method], size=10),
-            )
-            arrowsize +=50
+            if method == "STA/LTA" and sta_lta_detection_index == -1: # si pas de détection
+                continue
+            else:
+                x_event_numeric = x_event.timestamp() # x_event est un datetime, on le convertit en nombre pour le calcul
+                y_point = np.interp(x_event_numeric, time_numeric, data["Raw trace"])
+                fig.add_annotation(
+                    x=x_event,
+                    y=y_point,
+                    text=f"Detection time {method} : {x_event.strftime('%H:%M:%S:%f')[:-4]}",
+                    showarrow=True,
+                    arrowhead=2,
+                    arrowwidth=1,
+                    arrowcolor= 'white',
+                    ax=0,
+                    ay=arrowsize,
+                    font=dict(color=colors[method], size=10),
+                )
+                arrowsize +=25
 
-    fig.update_layout(title='Seismic trace through time', xaxis_title='Time', yaxis_title='Amplitude')
+    fig.update_layout(title='Seismic trace through time', legend_title_text='<b>Legend :</b>', xaxis_title='Time', yaxis_title='Amplitude')
     fig.update_yaxes(range=[-y1_max, y1_max], title_text="<b>Amplitude</b> (Traces)", secondary_y=False)
     fig.update_yaxes(range=[-y2_max, y2_max], title_text="<b>Amplitude</b> (Methods)", secondary_y=True)
 
     st.plotly_chart(fig)
 
+
+
+
+
+# 3EME ENCADRÉ (CLUSTERING)
     
 with st.container(height=190):
     st.markdown("**Results from clustering :**")
     for type in data_types:
         if type in detection_times.keys():
-            st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : {clustering_results[type]}", unsafe_allow_html=True)
-
-
-
-
-# # checkbox pour cacher ou afficher les données
-
-# # if st.checkbox('Show dataframe'):
-# #     chart_data = pd.DataFrame(
-# #        np.random.randn(20, 3),
-# #        columns=['a', 'b', 'c'])
-
-# #     chart_data
-
-# # tracer données
-
-# chart_data = pd.DataFrame(
-#      np.random.randn(20, 3),
-#      columns=['a', 'b', 'c'])
-
-# st.line_chart(chart_data)
-
-#fig = px.line(df, x="time", y=selected, labels={"variable":"Type of detection"}, color_discrete_map=colors)
+            if type == "STA/LTA" and sta_lta_detection_index == -1: # si pas de détection
+                continue
+            else:
+                st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : {clustering_results[type]}", unsafe_allow_html=True)
