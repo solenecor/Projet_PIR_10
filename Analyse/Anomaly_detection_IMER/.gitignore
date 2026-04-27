@@ -1,0 +1,8 @@
+# Python cache
+__pycache__/
+**/__pycache__/
+
+# Specific files to ignore
+Anomaly_detection_IMER/requete_API.py
+Anomaly_detection_IMER/lecture_mseed.py
+Anomaly_detection_IMER/event.mseed
