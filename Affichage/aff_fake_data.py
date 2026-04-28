@@ -1,33 +1,21 @@
 import streamlit as st
-
 from datetime import datetime, timedelta
-
 import numpy as np
-
 import pandas as pd
-
 import plotly.express as px
-
 import plotly.graph_objects as go
-
 from plotly.subplots import make_subplots
-
 import sys
-
 import os
-
 # Pour trouver un fichier qui n'est pas sous le dossier actuel
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 from Analyse.STA_LTA.impl_fake_data import detection_STA_LTA
-
+from Analyse.Multi_window.impl_fake_data import detection_multi_window
 
 
 # utilise toute la largeur de la page
 
 st.set_page_config(layout="wide")
-
 
 
 # affichage
@@ -92,26 +80,30 @@ st.title("Detection of the first arrival on a seismic trace")
 
 sample_rate = 100
 
-
+# sta_lta
 
 sta_lta_detection_index, sta_list, lta_list, trace = detection_STA_LTA()
+
+# multi-window
+
+multi_window_detection_index, bta_list, ata_list, dta_list = detection_multi_window(trace)
 
 # axe des x
 
 time = np.arange(len(trace)) / sample_rate
 
 
-data = {"Raw trace" : trace, "Denoised trace" : [0]*len(trace), "STA" : sta_list, "LTA" : lta_list , "MER" : [0]*len(trace), "IMER" : [0]*len(trace)}
+data = {"Raw trace" : trace, "Denoised trace" : [0]*len(trace), "STA" : sta_list, "LTA" : lta_list , "BTA" : bta_list, "ATA" : ata_list, "DTA" : dta_list, "MER" : [0]*len(trace), "IMER" : [0]*len(trace)}
 
-detection_times = {"STA/LTA" : sta_lta_detection_index / sample_rate , "MER" : 3.7, "IMER" : 3.4}
+detection_times = {"STA/LTA" : sta_lta_detection_index / sample_rate, "Multi-window" : multi_window_detection_index / sample_rate, "MER" : 3.7, "IMER" : 3.4}
 
-clustering_results = {"STA/LTA" : "Earthquake" , "MER" : "Earthquake", "IMER" : "Rainfall"}
+clustering_results = {"STA/LTA" : "Earthquake", "Multi-window" : "Quake", "MER" : "Earthquake", "IMER" : "Rainfall"}
 
 
 
 # différentes données affichables
 
-data_types = ["Raw trace", "Denoised trace", "STA/LTA", "MER", "IMER"]
+data_types = ["Raw trace", "Denoised trace", "STA/LTA", "Multi-window", "MER", "IMER"]
 
 selected = []
 
@@ -177,7 +169,6 @@ for i, type in enumerate(data_types):
 with st.container(height=490):
 
 
-
     fig = make_subplots(specs=[[{"secondary_y": True}]]) # on met un axe y secondaire
 
     # on fait en sorte que l'axe reste même quand les données associées ne sont pas visibles et que la légede aussi
@@ -187,7 +178,7 @@ with st.container(height=490):
             y=[None], 
             mode= 'markers', 
             name="No data selected" if not selected else "",
-            marker=dict(color='rgba(0,0,0,0)'),
+            marker=dict(color='grey' if not selected else'rgba(0,0,0,0)'),
             showlegend=True
         ), 
         secondary_y=True
@@ -208,14 +199,11 @@ with st.container(height=490):
     for type in data_types :
 
 
-
         if type in selected:
-
 
 
             is_secondary = type not in ['Raw trace', 'Denoised trace']
 
-           
 
             if type == "STA/LTA":
 
@@ -245,10 +233,43 @@ with st.container(height=490):
 
                     ), secondary_y=True)
 
+            elif type == "Multi-window":
+                # On trace les trois fenêtres si Multi-window est coché
 
+                sub_types = ["BTA", "ATA", "DTA"]
+
+                for sub in sub_types:
+
+                    is_bta = (sub == "BTA")
+                    is_ata = (sub == "ATA")
+
+                    if is_bta :
+                        line_style = 'dash' 
+                    elif is_ata :
+                        line_style = 'dot'
+                    else:
+                        line_style = 'solid'
+                
+
+                    fig.add_trace(go.Scatter(
+
+                        x=df["time"],
+
+                        y=df[sub],
+
+                        name="Multi-window",
+
+                        legendgroup="Multi-window",
+
+                        showlegend=is_bta, # pour afficher une seule fois la légende
+
+                        line=dict(dash=line_style, color=colors["Multi-window"]),
+
+                        mode='lines'
+
+                    ), secondary_y=True)
 
             else:
-
 
 
                 fig.add_trace(go.Scatter(
@@ -287,7 +308,7 @@ with st.container(height=490):
 
                 y=y_point,
 
-                text=f"Detection time {method} : {x_event} s",
+                text=f"Detection time {method} : {x_event:.3f} s",
 
                 showarrow=True,
 
@@ -305,7 +326,7 @@ with st.container(height=490):
 
             )
 
-            arrowsize +=50
+            arrowsize +=30
 
 
 
@@ -323,7 +344,7 @@ with st.container(height=490):
 
    
 
-with st.container(height=190):
+with st.container(height=230):
 
     st.markdown("**Results from clustering :**")
 
@@ -333,46 +354,3 @@ with st.container(height=190):
 
             st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : {clustering_results[type]}", unsafe_allow_html=True)
 
-
-
-
-
-
-
-
-
-# # checkbox pour cacher ou afficher les données
-
-
-
-# # if st.checkbox('Show dataframe'):
-
-# #     chart_data = pd.DataFrame(
-
-# #        np.random.randn(20, 3),
-
-# #        columns=['a', 'b', 'c'])
-
-
-
-# #     chart_data
-
-
-
-# # tracer données
-
-
-
-# chart_data = pd.DataFrame(
-
-#      np.random.randn(20, 3),
-
-#      columns=['a', 'b', 'c'])
-
-
-
-# st.line_chart(chart_data)
-
-
-
-#fig = px.line(df, x="time", y=selected, labels={"variable":"Type of detection"}, color_discrete_map=colors)
