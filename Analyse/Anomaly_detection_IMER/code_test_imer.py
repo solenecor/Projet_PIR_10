@@ -92,8 +92,8 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
  
     # ---- Données réelles (décommenter si lecture mseed disponible) ----------
-    trace = lecture_mseed("event.mseed")[0]['data_samples']
-    fs    = lecture_mseed("event.mseed")[0]['sample_rate_hz']
+    trace = lecture_mseed("event_CREF.mseed")[0]['data_samples']
+    fs    = lecture_mseed("event_CREF.mseed")[0]['sample_rate_hz']
     t     = np.arange(len(trace)) / fs
     # -------------------------------------------------------------------------
  
