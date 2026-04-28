@@ -1,21 +1,30 @@
 ### Imports :
 import numpy as np
-import numpydoc as npdoc
-import random as rd
 from networkx import *
+from calculs_distance import *
 
-### Fonctions de calculs pour l'article principal : 
+### Fonctions de calculs matriciels pour l'algo avec les weighted visibility graphs : 
+def decoupe_segments(serie, n_segments) :
+    """
+    Découpe une série en plusieurs segments, et renvoie la liste des segments
+    Entrées :
+        serie : liste de listes d'entiers
+        n_segments : entier (nombre de segments)
+    Sorties :
+        segments : liste de listes de listes d'entiers
+    """
+    longueur = len(serie)
+    taille_segment = longueur // n_segments
+    segments = []
+    for i in range(n_segments) :
+        debut = i * taille_segment
+        if i < n_segments - 1 :
+            fin = debut + taille_segment
+        else :
+            fin = longueur
+        segments.append(serie[debut:fin])
 
-# Distance euclidienne entre deux vecteurs de même dimension :
-def d_euclidienne(v1, v2):
-    """
-    Calcul de la distance euclidienne entre deux vecteurs v1 et v2.
-    Entrées : 
-        v1, v2 : listes d'entiers
-    Sorties : 
-        d : float numpy
-    """
-    return np.sqrt(np.sum((v1 - v2)**2))
+    return segments
 
 # Calcul de la matrice de distance pour un segment :
 def matrice_segment(vecteurs) :
@@ -33,7 +42,7 @@ def matrice_segment(vecteurs) :
             mat[j, i] = mat[i, j]
     return mat  
 
-# Calcul de la matrice globale :
+# Calcul de la matrice globale pour l'article principal :
 def matrice_distance_globale(matrices) :
     """
     Calcul de la matrice de distance globale normalisée, en faisant la moyenne de toutes les matrices
@@ -54,7 +63,32 @@ def matrice_distance_globale(matrices) :
 
     return m_d
 
-# Calcul de la matrice de similarité :
+
+
+### Fonction de la matrice globale pour les autres types de distance : 
+def matrice_distance_globale_autres(series, f_distance) :
+    """
+    Calcule la matrice de distance globale 
+    Entrées : 
+        series : array de array numpy (liste de séries temporelles)
+        f_distance : fonction de distance à appliquer, qui prend en entrée deux séries temporelles et retourne un float
+    Sorties :
+        m_d : array de array numpy (matrice)
+    """
+    m_d = np.zeros((len(series), len(series)))
+    for i in range(len(series)):
+        for j in range(len(series)):
+            if i != j:
+                m_d[i, j] = f_distance(series[i], series[j])
+    
+    # Normalisation de la matrice :
+    norme = np.linalg.norm(m_d)
+    m_d = m_d / norme
+
+    return m_d
+
+
+### Calcul de la matrice de similarité :
 def matrice_similarite(m_distance) :
     """
     Calcul de la matrice de similarité à partir de la matrice de distance globale
@@ -73,6 +107,9 @@ def matrice_similarite(m_distance) :
     
     return m_s
 
+
+
+### Transformation de la matrice de similarité en graphe :
 def transfo_graphe(m_similarite) :
     """
     Calcul le graphe associé à la matrice de similarité
