@@ -12,7 +12,7 @@ def get_data(url):
     else:
         print(f"Erreur {response.status_code}: {response.text}")
 
-
+get_data(url)
 
 
 
