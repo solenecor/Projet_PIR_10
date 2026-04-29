@@ -1,13 +1,7 @@
 import numpy as np
 from random import randint
 import matplotlib.pyplot as plt
-from lecture_mseed import *
-
-### Signal data
-trace = lecture_mseed("event.mseed")[0]['data_samples']
-fs = lecture_mseed("event.mseed")[0]['sample_rate_hz']
-
-wl_ms = 10  # window length
+from Lecture_data.lecture_mseed import lecture_mseed
 
 def MER(signal, wl, fs):
     '''
@@ -38,22 +32,39 @@ def MER(signal, wl, fs):
         mer_i = (np.abs(msignal[i])*ratio)**3
         res.append(mer_i)
     
+    res = np.concatenate(([res[0]], res, [res[-1]]))
     return res
 
-def detection_MER(mer, seuil):
+def first_detection_MER(mer, seuil):
     t=0
     while mer[t] < seuil:
         t+=1
     return t
 
-### Test
-Mer = MER(trace, wl_ms, fs)
-print(detection_MER(Mer, np.max(Mer)*2/3))
+def detection_MER(mer, seuil):
+    detect = []
+    for t in range(len(mer)):
+        if mer[t] >= seuil:
+            if not (detect != [] and t-detect[-1] <= 30):
+                detect.append(t)
+    return detect
 
-### Affichage
-plt.figure()
-plt.subplot(2,1,1)
-plt.plot(trace, color='r')
-plt.subplot(2,1,2)
-plt.plot(Mer, color='b')
-plt.show()
+
+if __name__ == "__main__":
+    ### Signal data
+    trace = lecture_mseed("event.mseed")[0]['data_samples']
+    fs = lecture_mseed("event.mseed")[0]['sample_rate_hz']
+
+    wl_ms = 10  # window length
+
+    ### Test
+    Mer = MER(trace, wl_ms, fs)
+    print(detection_MER(Mer, np.max(Mer)*2/3))
+
+    ### Affichage
+    plt.figure()
+    plt.subplot(2,1,1)
+    plt.plot(trace, color='r')
+    plt.subplot(2,1,2)
+    plt.plot(Mer, color='b')
+    plt.show()
