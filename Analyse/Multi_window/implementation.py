@@ -2,7 +2,7 @@ import numpy as np
 from scipy.signal import hilbert
 
 
-def multi_window(trace, t, m, n, q, d, p, alpha, env, expected_snr):
+def multi_window(trace, t, m, n, q, d, p, alpha, env, h2, h3):
     ''' time point t; m, n, and q represent the lengths of the windows in 
     samples,d is the time delay for a DTA window, alpha is the coefficient to
     adjust the height of the first threshold and p is the number of shifted samples
@@ -13,23 +13,19 @@ def multi_window(trace, t, m, n, q, d, p, alpha, env, expected_snr):
     
     h1 = np.mean(env[t-m-p : t-p]) + alpha * np.std(env[t-m-p:t-p])
 
-    h2 = 0.75 * expected_snr
 
-    h3 = 0.75 * expected_snr
+    bta_energy = np.mean(np.abs(bta_window))
+    ata_energy = np.mean(np.abs(ata_window))
+    dta_energy = np.mean(np.abs(dta_window))
+
+    if bta_energy != 0:
+        r2 = ata_energy / bta_energy
+        r3 = dta_energy / bta_energy    
+    else :
+        r2 = 0
+        r3 = 0
 
     if np.abs(trace[t]) > h1:
-
-        bta_energy = np.mean(np.abs(bta_window))
-        ata_energy = np.mean(np.abs(ata_window))
-        dta_energy = np.mean(np.abs(dta_window))
-
-        if bta_energy != 0:
-            r2 = ata_energy / bta_energy
-            r3 = dta_energy / bta_energy    
-        else :
-            r2 = 0
-            r3 = 0
-
 
         if r2 > h2 and r3 > h3:
 
@@ -52,44 +48,31 @@ def multi_window(trace, t, m, n, q, d, p, alpha, env, expected_snr):
 
         is_detected = False
 
-    return is_detected, t
+    return is_detected, t, r2, r3
 
 
-def detection_multi_window(trace, m, n, q, d, p, alpha, expected_snr):
+def detection_multi_window(trace, m, n, q, d, p, alpha, expected_snr, sample_rate):
 
     env = np.abs(hilbert(trace))
 
     i = m + p
-    bta_list = [-1]* len(trace)
-    ata_list = [-1]* len(trace)
-    dta_list = [-1]* len(trace)
+
+    h2 = 0.75*expected_snr
+    h3 = 0.75*expected_snr
+
+    r2 = [0]*len(trace)
+    r3 = [0]*len(trace)
+
+    detection_indexes = []
 
     while i < len(trace) - d - q:
         # on fait le ratio point par point
-        is_detected, detection_index = multi_window(trace, i, m, n, q, d, p, alpha, env, expected_snr)
+        is_detected, detection_index, r2[i], r3[i] = multi_window(trace, i, m, n, q, d, p, alpha, env, h2, h3)
         
         if is_detected:
             # quand on détecte un dépassement du seuil
-            detection_index_int = int(detection_index) # pour être sure que les comparaisons fonctionnent
-            for k in range(len(trace)):
-                if detection_index_int >= k and k >= detection_index_int - m :
-                    bta_list[k] = 18
-                else:
-                    bta_list[k] = 0
-
-            for k in range(len(trace)):
-                if detection_index_int <= k and k <= detection_index_int + n:
-                    ata_list[k] = 17
-                else:
-                    ata_list[k] = 0
-
-            for k in range(len(trace)):
-                if detection_index_int <= k and k <= detection_index_int + d + q:
-                    dta_list[k] = 16
-                else:
-                    dta_list[k] = 0
-
-            return detection_index, bta_list, ata_list, dta_list
+            if len(detection_indexes) == 0 or detection_index > detection_indexes[-1] + sample_rate * 10: # on attend 10s pour qu'il ne s'agisse pas du même évènement (ou alors s'il y a pas déjà d'autre détection)
+                detection_indexes.append(detection_index)
         
         i += 1 
-    return -1, bta_list, ata_list, dta_list
+    return detection_indexes, r2, r3, [h2]*len(trace), [h3]*len(trace)

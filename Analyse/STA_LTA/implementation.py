@@ -17,32 +17,22 @@ def STA_LTA(trace, i, ns, nl, threshold):
         is_detected = True
     else:
         is_detected = False
-    return is_detected, i
+    return is_detected, i, ratio
 
     
-def detection_STA_LTA(trace, ns, nl, threshold):
+def detection_STA_LTA(trace, ns, nl, threshold, sample_rate):
     i = nl
-    sta_list = [-1]* len(trace)
-    lta_list = [-1]* len(trace)
+    ratio = [0] * len(trace)
+    detection_indexes = []
     while i < len(trace):
         # on fait le ratio point par point
-        is_detected, detection_index = STA_LTA(trace, i, ns, nl, threshold)
+        is_detected, detection_index, ratio[i] = STA_LTA(trace, i, ns, nl, threshold)
         
+
         if is_detected:
             # quand on détecte un dépassement du seuil
-            for k in range(len(trace)):
-                if detection_index >= k and k >= detection_index - ns:
-                    sta_list[k] = 17
-                else:
-                    sta_list[k] = 0
-
-            for k in range(len(trace)):
-                if detection_index >= k and k >= detection_index - nl:
-                    lta_list[k] = 16
-                else:
-                    lta_list[k] = 0
-
-            return detection_index, sta_list, lta_list
+            if len(detection_indexes) == 0 or detection_index > detection_indexes[-1] + sample_rate * 10: # on attend 10s pour qu'il ne s'agisse pas du même évènement (ou alors s'il y a pas déjà d'autre détection)
+                detection_indexes.append(detection_index)
         
         i += 1 
-    return -1, sta_list, lta_list
+    return detection_indexes, ratio

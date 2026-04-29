@@ -80,7 +80,7 @@ lta_duration = 10
 sta_lta_threshold = 3
 ns = int(sta_duration * sample_rate)
 nl = int(lta_duration * sample_rate)
-sta_lta_detection_index, sta_list, lta_list = detection_STA_LTA(trace, ns, nl, sta_lta_threshold)
+sta_lta_detection_indexes, sta_lta_ratio = detection_STA_LTA(trace, ns, nl, sta_lta_threshold, sample_rate)
 
     # MULTI-WINDOW
 alpha = 3
@@ -90,12 +90,12 @@ q = 30
 d = 10
 p = 5
 expected_snr = 3
-multi_window_detection_index, bta_list, ata_list, dta_list = detection_multi_window(trace, m, n, q, d, p, alpha, expected_snr)
+multi_window_detection_indexes, r2, r3, h2, h3 = detection_multi_window(trace, m, n, q, d, p, alpha, expected_snr, sample_rate)
 
 
     # REGROUPEMENT
-data = {"Raw trace" : trace, "Denoised trace" : [0]*len(trace), "STA" : sta_list, "LTA" : lta_list , "BTA" : bta_list, "ATA" : ata_list, "DTA" : dta_list, "MER" : [0]*len(trace), "IMER" : [0]*len(trace)}
-detection_times = {"STA/LTA" : start_dt + timedelta(seconds=sta_lta_detection_index / sample_rate), "Multi-window" : start_dt + timedelta(seconds=multi_window_detection_index / sample_rate), "MER" : start_dt + timedelta(seconds=3.7), "IMER" : start_dt + timedelta(seconds=3.4)}
+data = {"Raw trace" : trace, "Denoised trace" : [0]*len(trace), "STA/LTA" : sta_lta_ratio , "R2" : r2, "R3" : r3, "MER" : [0]*len(trace), "IMER" : [0]*len(trace)}
+detection_times = {"STA/LTA" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in sta_lta_detection_indexes], "Multi-window" :[start_dt + timedelta(seconds=idx / sample_rate) for idx in multi_window_detection_indexes], "MER" : [], "IMER" : []}
 clustering_results = {"STA/LTA" : "Earthquake", "Multi-window" : "Quake", "MER" : "Earthquake", "IMER" : "Rainfall"}
 
     # DIFFERENTES DONNEES AFFICHABLES
@@ -137,6 +137,10 @@ for type in data_types:
 # Mise sous forme de DataFrame 
 df = pd.DataFrame(data)
 df['time'] = time
+df['H2'] = h2
+df['H3'] = h3
+df['sta_lta_threshold'] = [sta_lta_threshold]*len(trace)
+
 
 # couleurs
 colors = {}
@@ -185,28 +189,36 @@ with st.container(height=490):
             
             if type == "STA/LTA":
 
-                if sta_lta_detection_index != -1: # si il y a bien une détection
+                if len(sta_lta_detection_indexes) != 0: # si il y a bien une détection
 
-                    # On trace les deux fenêtres si STA/LTA est coché
-                    sub_types = ["STA", "LTA"]
-                    for sub in sub_types:
-                        is_sta = (sub == "STA")
-                        fig.add_trace(go.Scatter(
-                            x=df["time"], 
-                            y=df[sub], 
-                            name="STA/LTA",
-                            legendgroup="STA/LTA",
-                            showlegend=is_sta, # pour afficher une seule fois la légende
-                            line=dict(dash='dash' if sub == 'LTA' else 'solid', color=colors["STA/LTA"]),
-                            mode='lines'
-                        ), secondary_y=True
-                        )
+                    fig.add_trace(go.Scatter(
+                        x=df["time"], 
+                        y=df[type], 
+                        name=type,
+                        legendgroup=type,
+                        showlegend=False, # pour afficher une seule fois la légende
+                        line=dict(dash='dash', color=colors[type]),
+                        mode='lines'
+                    ), secondary_y=True
+                    )
+
+                    fig.add_trace(go.Scatter(
+                        x=df["time"], 
+                        y=df['sta_lta_threshold'], 
+                        name=type,
+                        legendgroup=type,
+                        showlegend=True, # pour afficher une seule fois la légende
+                        line=dict(dash='solid', color=colors[type]),
+                        mode='lines'
+                    ), secondary_y=True
+                    )
+
                 else:
                     fig.add_trace(go.Scatter(
                         x=[df["time"].iloc[0]], 
                         y=[None], 
                         mode='lines', 
-                        marker=dict(color=colors["STA/LTA"]),
+                        marker=dict(color=colors[type]),
                         name="STA/LTA : No detection",
                         showlegend=True
                     ), 
@@ -214,31 +226,51 @@ with st.container(height=490):
 
             elif type == "Multi-window":
 
-                if multi_window_detection_index != -1: # si il y a bien une détection
+                if len(multi_window_detection_indexes) != 0: # si il y a bien une détection
 
-                    # On trace les trois fenêtres si Multi-window est coché
-                    sub_types = ["BTA", "ATA", "DTA"]
+                    fig.add_trace(go.Scatter(
+                        x=df["time"], 
+                        y=df["R2"], 
+                        name=type,
+                        legendgroup=type,
+                        showlegend=False, # pour afficher une seule fois la légende
+                        line=dict(dash='longdash', color=colors[type]),
+                        mode='lines'
+                    ), secondary_y=True
+                    )
 
-                    for sub in sub_types:
-                        is_bta = (sub == "BTA")
-                        is_ata = (sub == "ATA")
+                    fig.add_trace(go.Scatter(
+                        x=df["time"], 
+                        y=df["R3"], 
+                        name=type,
+                        legendgroup=type,
+                        showlegend=False, # pour afficher une seule fois la légende
+                        line=dict(dash='dot', color=colors[type]),
+                        mode='lines'
+                    ), secondary_y=True
+                    )
 
-                        if is_bta :
-                            line_style = 'dash' 
-                        elif is_ata :
-                            line_style = 'dot'
-                        else:
-                            line_style = 'solid'
-                    
-                        fig.add_trace(go.Scatter(
-                            x=df["time"],
-                            y=df[sub],
-                            name="Multi-window",
-                            legendgroup="Multi-window",
-                            showlegend=is_bta, # pour afficher une seule fois la légende
-                            line=dict(dash=line_style, color=colors["Multi-window"]),
-                            mode='lines'
-                        ), secondary_y=True)
+                    fig.add_trace(go.Scatter(
+                        x=df["time"], 
+                        y=df['H2'], 
+                        name=type,
+                        legendgroup=type,
+                        showlegend=True, # pour afficher une seule fois la légende
+                        line=dict(dash='solid', color=colors[type]),
+                        mode='lines'
+                    ), secondary_y=True
+                    )
+
+                    fig.add_trace(go.Scatter(
+                        x=df["time"], 
+                        y=df['H3'], 
+                        name=type,
+                        legendgroup=type,
+                        showlegend=False, # pour afficher une seule fois la légende
+                        line=dict(dash='solid', color=colors[type]),
+                        mode='lines'
+                    ), secondary_y=True
+                    )
                 
                 else:
                     fig.add_trace(go.Scatter(
@@ -266,25 +298,26 @@ with st.container(height=490):
     if 'Raw trace' in selected:
         arrowsize = 100
         time_numeric = [t.timestamp() for t in time] # temps de la trace en format numérique pour numpy
-        for method, x_event in detection_times.items():
-            if (method == "STA/LTA" and sta_lta_detection_index == -1) or (method == "Multi-window" and multi_window_detection_index == -1): # si pas de détection
+        for method, list_events in detection_times.items():
+            if (method == "STA/LTA" and len(sta_lta_detection_indexes) == 0) or (method == "Multi-window" and len(multi_window_detection_indexes) == 0): # si pas de détection
                 continue
             else:
-                x_event_numeric = x_event.timestamp() # x_event est un datetime, on le convertit en nombre pour le calcul
-                y_point = np.interp(x_event_numeric, time_numeric, data["Raw trace"])
-                fig.add_annotation(
-                    x=x_event,
-                    y=y_point,
-                    text=f"Detection time {method} : {x_event.strftime('%H:%M:%S:%f')[:-4]}",
-                    showarrow=True,
-                    arrowhead=2,
-                    arrowwidth=1,
-                    arrowcolor= 'white',
-                    ax=0,
-                    ay=arrowsize,
-                    font=dict(color=colors[method], size=10),
-                )
-                arrowsize +=30
+                for i, x_event in enumerate(list_events):
+                    x_event_numeric = x_event.timestamp() # x_event est un datetime, on le convertit en nombre pour le calcul
+                    y_point = np.interp(x_event_numeric, time_numeric, data["Raw trace"])
+                    fig.add_annotation(
+                        x=x_event,
+                        y=y_point,
+                        text=f"Detection time {method} : {x_event.strftime('%H:%M:%S:%f')[:-4]}",
+                        showarrow=True,
+                        arrowhead=2,
+                        arrowwidth=1,
+                        arrowcolor= 'white',
+                        ax=0,
+                        ay=arrowsize,
+                        font=dict(color=colors[method], size=10),
+                    )
+                    arrowsize +=30
 
     fig.update_layout(title='Seismic trace through time', legend_title_text='<b>Legend :</b>', xaxis_title='Time', yaxis_title='Amplitude')
     fig.update_yaxes(range=[-y1_max, y1_max], title_text="<b>Amplitude</b> (Traces)", secondary_y=False)
@@ -302,7 +335,7 @@ with st.container(height=190):
     st.markdown("**Results from clustering :**")
     for type in data_types:
         if type in detection_times.keys():
-            if (type == "STA/LTA" and sta_lta_detection_index == -1) or (type == "Multi-window" and multi_window_detection_index == -1): # si pas de détection
+            if (type == "STA/LTA" and len(sta_lta_detection_indexes) == 0) or (type == "Multi-window" and len(multi_window_detection_indexes) == 0): # si pas de détection
                 continue
             else:
                 st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : {clustering_results[type]}", unsafe_allow_html=True)
