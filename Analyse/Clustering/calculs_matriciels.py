@@ -1,7 +1,11 @@
 ### Imports :
 import numpy as np
 from networkx import *
-from calculs_distance import *
+import sys 
+import os
+# Pour trouver un fichier qui n'est pas sous le dossier actuel
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from Analyse.calculs_distance import *
 
 ### Fonctions de calculs matriciels pour l'algo avec les weighted visibility graphs : 
 def decoupe_segments(serie, n_segments) :
@@ -132,9 +136,3 @@ def transfo_graphe(m_similarite) :
     
     return G
 
-
-
-
-
-
-    
