@@ -32,7 +32,7 @@ def distance_L1(u, v):
         u : série temporelle, un array numpy     
         v : série temporelle, un array numpy
     Sortie :
-        d : float
+        d : float numpy
     """
     d = sum(np.abs(u - v))
     return d
@@ -44,7 +44,7 @@ def distance_L2(u, v):
         u : série temporelle, un array numpy     
         v : série temporelle, un array numpy
     Sortie :
-        d : float
+        d : float numpy
     """
     d = np.sqrt(sum((u - v)**2))
     return d

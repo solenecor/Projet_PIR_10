@@ -87,9 +87,46 @@ def clustering_distance_dtw(l_series) :
 
     return G
 
+def clustering_distance_L1(l_series) :
+    """
+    Effectue le clustering sur les séries temporelles en utilisant la norme L1
+    Entrées :
+        l_series : liste d'array numpy, chaque array correspond à une série temporelle
+    Sorties :
+        G : graphe networkx
+    """
+    # Calcul de la matrice de distance globale :
+    m_distance_globale = matrice_distance_globale_autres(l_series, distance_L1)
+
+    # Calcul de la matrice de similarité : 
+    m_similarite = matrice_similarite(m_distance_globale)
+
+    # # Transfo en graphe : 
+    G = transfo_graphe(m_similarite)
+
+    return G
+
+def clustering_distance_L2(l_series) :
+    """
+    Effectue le clustering sur les séries temporelles en utilisant la norme L2
+    Entrées :
+        l_series : liste d'array numpy, chaque array correspond à une série temporelle
+    Sorties :
+        G : graphe networkx
+    """
+    # Calcul de la matrice de distance globale :
+    m_distance_globale = matrice_distance_globale_autres(l_series, distance_L2)
+
+    # Calcul de la matrice de similarité : 
+    m_similarite = matrice_similarite(m_distance_globale)
+
+    # # Transfo en graphe : 
+    G = transfo_graphe(m_similarite)
+
+    return G
+
 
 if __name__ == "__main__" :
-    print(os.getcwd())
 
     data2 = lecture_mseed("event_CALF.mseed")
     data1 = lecture_mseed("event_CREF.mseed")
@@ -116,14 +153,32 @@ if __name__ == "__main__" :
     print("Graphe de du clustering 1 construit")
     end_time = time()
     print(f"Temps de construction du graphe 1 : {end_time - start_time:.2f} secondes")
-
+   
+    
     start_time = time()
     G_dtw = clustering_distance_dtw([serie1, serie2])
     print("Graphe de du clustering 2 construit")
     end_time = time()
     print(f"Temps de construction du graphe 2 : {end_time - start_time:.2f} secondes")
 
+    start_time = time()
+    G_L1 = clustering_distance_L1([serie1, serie2])
+    print("Graphe de du clustering 3 construit")
+    end_time = time()
+    print(f"Temps de construction du graphe 3 : {end_time - start_time:.2f} secondes")
 
-    draw_circular(G_visibility, node_color="red")
-    draw_circular(G_dtw, node_color="green")
-    P.show()
+    start_time = time()
+    G_L2 = clustering_distance_L2([serie1, serie2])
+    print("Graphe de du clustering 4 construit")
+    end_time = time()
+    print(f"Temps de construction du graphe 4 : {end_time - start_time:.2f} secondes")
+
+    ### Comparaison de la similarité :
+    print(f"Similarité ac visibility graph : {G_visibility.edges[0,1]['weight']}")
+    print(f"Similarité ac DTW : {G_dtw.edges[0,1]['weight']}")
+    print(f"Similarité ac L1 : {G_L1.edges[0,1]['weight']}")
+    print(f"Similarité ac L2 : {G_L2.edges[0,1]['weight']}")
+    
+
+    
+    
