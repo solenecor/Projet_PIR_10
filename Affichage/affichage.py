@@ -77,22 +77,34 @@ time = [start_dt + timedelta(seconds=i/sample_rate) for i in range(len(denoised_
 
 
     # STA/LTA
-sta_duration = 1
-lta_duration = 10
-sta_lta_threshold = 3
-ns = int(sta_duration * sample_rate)
-nl = int(lta_duration * sample_rate)
-sta_lta_detection_indexes, sta_lta_ratio = detection_STA_LTA(denoised_trace, ns, nl, sta_lta_threshold, sample_rate)
+if 'sta_duration' not in st.session_state:
+    st.session_state.sta_duration = 1
+if 'lta_duration' not in st.session_state:
+    st.session_state.lta_duration = 10
+if'sta_lta_threshold' not in st.session_state:
+    st.session_state.sta_lta_threshold = 3
+
+ns = int(st.session_state.sta_duration * sample_rate)
+nl = int(st.session_state.lta_duration * sample_rate)
+sta_lta_detection_indexes, sta_lta_ratio = detection_STA_LTA(denoised_trace, ns, nl, st.session_state.sta_lta_threshold, sample_rate)
 
     # MULTI-WINDOW
-alpha = 3
-m = 40
-n = 30
-q = 30
-d = 10
-p = 5
-expected_snr = 3
-multi_window_detection_indexes, r2, r3, h2, h3 = detection_multi_window(denoised_trace, m, n, q, d, p, alpha, expected_snr, sample_rate)
+if 'alpha' not in st.session_state:
+    st.session_state.alpha = 3
+if 'm' not in st.session_state:
+    st.session_state.m = 40
+if 'n' not in st.session_state:
+    st.session_state.n = 30
+if 'q' not in st.session_state:
+    st.session_state.q = 30
+if 'd' not in st.session_state:
+    st.session_state.d = 10
+if 'p' not in st.session_state:
+    st.session_state.p = 5
+if 'expected_snr' not in st.session_state:
+    st.session_state.expected_snr = 3
+
+multi_window_detection_indexes, r2, r3, h2, h3 = detection_multi_window(denoised_trace, st.session_state.m, st.session_state.n, st.session_state.q, st.session_state.d, st.session_state.p, st.session_state.alpha, st.session_state.expected_snr, sample_rate)
 
 
     # REGROUPEMENT
@@ -144,7 +156,7 @@ df = pd.DataFrame(data)
 df['time'] = time
 df['H2'] = h2
 df['H3'] = h3
-df['sta_lta_threshold'] = [sta_lta_threshold]*len(denoised_trace)
+df['sta_lta_threshold'] = [st.session_state.sta_lta_threshold]*len(denoised_trace)
 
 
 # couleurs
@@ -334,13 +346,50 @@ with st.container(height=490):
 
 
 
-# 3EME ENCADRÉ (CLUSTERING)
+
+# 3EME ENCADRÉ (PARAMETRES)
+with st.container(height=600):
+    st.markdown("**Parameters :**")
+    for type in data_types:
+        if type in detection_times.keys():
+            st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> :", unsafe_allow_html=True) 
+            with st.expander("Show parameters"):
+                if type == "STA/LTA":
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.number_input('STA window length :', value=1, key='sta_duration')
+                    with col2:
+                        st.number_input('LTA window length :', value=10, key='lta_duration')
+                    with col3:
+                        st.number_input('STA/LTA threshold value :', value=3, key='sta_lta_threshold')
+
+                if type == "Multi-window":
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.number_input('BTA window length :', value=40, key='m')
+                        st.number_input('DTA delay :', value=10, key='d')
+                        st.number_input('Coefficient to adjust the height of H1 (α):', value=3, key='alpha')
+                    with col2:
+                        st.number_input('ATA window length :', value=30, key='n')
+                        st.number_input('Number of shifted samples (for H1 calculation) :', value=5, key='p')
+                    with col3:
+                        st.number_input('DTA window length :', value=30, key='q')
+                        st.number_input('Expected value of SNR :', value=3, key='expected_snr')
     
-with st.container(height=190):
+                    
+
+
+
+
+
+# 4EME ENCADRÉ (CLUSTERING)
+    
+with st.container(height=250):
     st.markdown("**Results from clustering :**")
     for type in data_types:
         if type in detection_times.keys():
             if (type == "STA/LTA" and len(sta_lta_detection_indexes) == 0) or (type == "Multi-window" and len(multi_window_detection_indexes) == 0): # si pas de détection
-                continue
+                st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : No detection", unsafe_allow_html=True)
+
             else:
                 st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : {clustering_results[type]}", unsafe_allow_html=True)
