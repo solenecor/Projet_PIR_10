@@ -58,7 +58,7 @@ def affichage_simple_traces(trace_data):
 
 
 if __name__ == "__main__":
-    input_file = "event.mseed"
+    input_file = "event_CREF.mseed"
     trace_data = lecture_mseed(input_file)
     affichage_simple_traces(trace_data)
             

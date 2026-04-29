@@ -59,10 +59,10 @@ if response_xml.status_code == 200:
         print(f"Erreur {response_stations.status_code} lors de la récupération des stations : {response_stations.text}")
     
     if list_stations: 
-    # fenêtre autour de l'event (30s avant, 30s après)
+    # fenêtre autour de l'event (60s avant, 60s après)
         dt_origin = datetime.strptime(origin_time[:26], "%Y-%m-%dT%H:%M:%S.%f")
-        start = (dt_origin - timedelta(seconds=30)).strftime("%Y-%m-%dT%H:%M:%S")
-        end = (dt_origin + timedelta(seconds=30)).strftime("%Y-%m-%dT%H:%M:%S")
+        start = (dt_origin - timedelta(seconds=60)).strftime("%Y-%m-%dT%H:%M:%S")
+        end = (dt_origin + timedelta(seconds=60)).strftime("%Y-%m-%dT%H:%M:%S")
 
         for s in list_stations[:3]:  # On teste sur les 3 premières pour l'exemple
             url_dl = f"https://seisdata.epos-france.fr/fdsnws/dataselect/1/query?network={s['net']}&station={s['sta']}&location={s['loc']}&channel={s['cha']}&starttime={start}&endtime={end}"

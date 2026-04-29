@@ -8,6 +8,7 @@
 """
 
 import numpy as np
+from dtw import dtw
 
 
 def d_euclidienne(v1, v2):
@@ -47,3 +48,15 @@ def distance_L2(u, v):
     """
     d = np.sqrt(sum((u - v)**2))
     return d
+
+def distance_dtw(u, v) :
+    """
+    Calcule la distance DTW entre les deux séries temporelles u et v, compatible avec des séries de longueurs différentes.
+    Entrées :
+        u : série temporelle, un array numpy     
+        v : série temporelle, un array numpy    
+    Sortie :
+        d : float
+    """
+    alignment = dtw(u, v, keep_internals=True)
+    return alignment.distance

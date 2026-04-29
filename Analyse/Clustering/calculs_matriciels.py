@@ -68,7 +68,6 @@ def matrice_distance_globale(matrices) :
     return m_d
 
 
-
 ### Fonction de la matrice globale pour les autres types de distance : 
 def matrice_distance_globale_autres(series, f_distance) :
     """
