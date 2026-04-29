@@ -22,7 +22,7 @@ def STA_LTA(trace, i, ns, nl, threshold):
     
 def detection_STA_LTA(trace, ns, nl, threshold, sample_rate):
     i = nl
-    ratio = [0] * len(trace)
+    ratio = [-10] * len(trace)
     detection_indexes = []
     while i < len(trace):
         # on fait le ratio point par point

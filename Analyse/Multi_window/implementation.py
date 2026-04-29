@@ -60,8 +60,8 @@ def detection_multi_window(trace, m, n, q, d, p, alpha, expected_snr, sample_rat
     h2 = 0.75*expected_snr
     h3 = 0.75*expected_snr
 
-    r2 = [0]*len(trace)
-    r3 = [0]*len(trace)
+    r2 = [-10]*len(trace)
+    r3 = [-10]*len(trace)
 
     detection_indexes = []
 

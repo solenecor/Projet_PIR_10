@@ -12,6 +12,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from Analyse.STA_LTA.implementation import detection_STA_LTA
 from Lecture_data.lecture_mseed import lecture_mseed
 from Analyse.Multi_window.implementation import detection_multi_window
+from Analyse.Smoothing.eppf import eppf
 
 
 
@@ -61,7 +62,8 @@ st.title("Detection of the first arrival on a seismic trace")
 trace_file = "../event.mseed"
 
 data_trace = lecture_mseed(trace_file)
-trace = data_trace[0]["data_samples"]
+raw_trace = data_trace[0]["data_samples"]
+denoised_trace = eppf(raw_trace, 81, 2)
 sample_rate = data_trace[0]["sample_rate_hz"]
 
 start_str = data_trace[0]["start_time"]
@@ -71,7 +73,7 @@ start_str = data_trace[0]["start_time"]
 
 # on convertit la date en datetime
 start_dt = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
-time = [start_dt + timedelta(seconds=i/sample_rate) for i in range(len(trace))]
+time = [start_dt + timedelta(seconds=i/sample_rate) for i in range(len(denoised_trace))]
 
 
     # STA/LTA
@@ -80,7 +82,7 @@ lta_duration = 10
 sta_lta_threshold = 3
 ns = int(sta_duration * sample_rate)
 nl = int(lta_duration * sample_rate)
-sta_lta_detection_indexes, sta_lta_ratio = detection_STA_LTA(trace, ns, nl, sta_lta_threshold, sample_rate)
+sta_lta_detection_indexes, sta_lta_ratio = detection_STA_LTA(denoised_trace, ns, nl, sta_lta_threshold, sample_rate)
 
     # MULTI-WINDOW
 alpha = 3
@@ -90,11 +92,11 @@ q = 30
 d = 10
 p = 5
 expected_snr = 3
-multi_window_detection_indexes, r2, r3, h2, h3 = detection_multi_window(trace, m, n, q, d, p, alpha, expected_snr, sample_rate)
+multi_window_detection_indexes, r2, r3, h2, h3 = detection_multi_window(denoised_trace, m, n, q, d, p, alpha, expected_snr, sample_rate)
 
 
     # REGROUPEMENT
-data = {"Raw trace" : trace, "Denoised trace" : [0]*len(trace), "STA/LTA" : sta_lta_ratio , "R2" : r2, "R3" : r3, "MER" : [0]*len(trace), "IMER" : [0]*len(trace)}
+data = {"Raw trace" : raw_trace, "Denoised trace" : denoised_trace, "STA/LTA" : sta_lta_ratio , "R2" : r2, "R3" : r3, "MER" : [0]*len(denoised_trace), "IMER" : [0]*len(denoised_trace)}
 detection_times = {"STA/LTA" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in sta_lta_detection_indexes], "Multi-window" :[start_dt + timedelta(seconds=idx / sample_rate) for idx in multi_window_detection_indexes], "MER" : [], "IMER" : []}
 clustering_results = {"STA/LTA" : "Earthquake", "Multi-window" : "Quake", "MER" : "Earthquake", "IMER" : "Rainfall"}
 
@@ -117,15 +119,18 @@ with st.container(height=110):
 
     for i, type in enumerate(data_types):
         # On place chaque checkbox dans une colonne 
-        if type == "Raw trace":
+        if type == "Raw trace" or type == 'Denoised trace':
             cols[i].checkbox(type, key=type, value=True)
         else:
             cols[i].checkbox(type, key=type, value=False)
 
 
-# pour qu'au départ raw trace apparaisse par défaut
+# pour qu'au départ les traces apparaissent par défaut
 if not selected and "Raw trace" not in st.session_state:
     selected = ["Raw trace"]
+
+if not selected and "Denoised trace" not in st.session_state:
+    selected = ["Denoised trace"]
 
 
 for type in data_types:
@@ -139,7 +144,7 @@ df = pd.DataFrame(data)
 df['time'] = time
 df['H2'] = h2
 df['H3'] = h3
-df['sta_lta_threshold'] = [sta_lta_threshold]*len(trace)
+df['sta_lta_threshold'] = [sta_lta_threshold]*len(denoised_trace)
 
 
 # couleurs
@@ -295,7 +300,7 @@ with st.container(height=490):
                     secondary_y=is_secondary,
                     )
 
-    if 'Raw trace' in selected:
+    if 'Denoised trace' in selected or 'Raw trace' in selected:
         arrowsize = 100
         time_numeric = [t.timestamp() for t in time] # temps de la trace en format numérique pour numpy
         for method, list_events in detection_times.items():
@@ -304,7 +309,7 @@ with st.container(height=490):
             else:
                 for i, x_event in enumerate(list_events):
                     x_event_numeric = x_event.timestamp() # x_event est un datetime, on le convertit en nombre pour le calcul
-                    y_point = np.interp(x_event_numeric, time_numeric, data["Raw trace"])
+                    y_point = np.interp(x_event_numeric, time_numeric, data["Denoised trace"])
                     fig.add_annotation(
                         x=x_event,
                         y=y_point,
