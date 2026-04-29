@@ -5,7 +5,7 @@ import sys
 import os
 # Pour trouver un fichier qui n'est pas sous le dossier actuel
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from Analyse.calculs_distance import *
+from Clustering.calculs_distance import *
 
 ### Fonctions de calculs matriciels pour l'algo avec les weighted visibility graphs : 
 def decoupe_segments(serie, n_segments) :

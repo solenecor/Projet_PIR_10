@@ -3,7 +3,7 @@ import sys
 import os
 # Pour trouver un fichier qui n'est pas sous le dossier actuel
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-from Analyse.extraction_FeatTS import *
+from Clustering.extraction_FeatTS import *
 from Lecture_data.lecture_mseed import lecture_mseed
 
 

@@ -3,7 +3,7 @@ import sys
 import os
 # Pour trouver un fichier qui n'est pas sous le dossier actuel
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-from Analyse.calculs_distance import *
+from Clustering.calculs_distance import *
 
 # Définition des vecteurs de test :
 u = np.array([1, 2, 3, 4, 5])
