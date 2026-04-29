@@ -7,7 +7,7 @@ Nous avons 2 types de requêtes :
 Bibliothèques nécessaires : 
 ```
 pip install pymseed
-pip install lmxl
+pip install lxml
 pip install numpy
 ````
 ## requete_API.py
