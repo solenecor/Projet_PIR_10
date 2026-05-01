@@ -13,6 +13,7 @@ from Analyse.STA_LTA.implementation import detection_STA_LTA
 from Lecture_data.lecture_mseed import lecture_mseed
 from Analyse.Multi_window.implementation import detection_multi_window
 from Analyse.Smoothing.eppf import eppf
+from Analyse.Smoothing.eps import eps
 
 
 
@@ -63,7 +64,20 @@ trace_file = "../event.mseed"
 
 data_trace = lecture_mseed(trace_file)
 raw_trace = data_trace[0]["data_samples"]
-denoised_trace = eppf(raw_trace, 81, 2)
+if 'denoising_method' not in st.session_state:
+    st.session_state.denoising_method = 'EPPF'
+if 'window_eppf' not in st.session_state:
+    st.session_state.window_eppf = 81
+if 'degree_eppf' not in st.session_state:
+    st.session_state.degree_eppf = 2
+if 'window_eps' not in st.session_state:
+    st.session_state.window_eps = 5
+
+if st.session_state.denoising_method == 'EPPF':
+    denoised_trace = eppf(raw_trace, st.session_state.window_eppf, st.session_state.degree_eppf)
+else:
+    denoised_trace = eps(raw_trace, st.session_state.window_eps)
+
 sample_rate = data_trace[0]["sample_rate_hz"]
 
 start_str = data_trace[0]["start_time"]
@@ -350,6 +364,19 @@ with st.container(height=490):
 # 3EME ENCADRÉ (PARAMETRES)
 with st.container(height=600):
     st.markdown("**Parameters :**")
+
+    st.markdown(f"<span style='color:{colors['Denoised trace']}; font-weight:bold;'>Denoised trace</span> :", unsafe_allow_html=True) 
+    method = st.radio("Method :", ('EPPF', 'EPS'), key='denoising_method', horizontal=True, label_visibility="collapsed")
+    with st.expander("Show parameters"):
+        if method == 'EPPF':
+            c1, c2 = st.columns(2)
+            with c1:
+                st.number_input('Window size :', value=81, key='window_eppf')
+            with c2:
+                st.number_input('Degree :', value=2, key='degree_eppf')
+        else:
+            st.number_input('Window size :', value=5, key='window_eps')
+
     for type in data_types:
         if type in detection_times.keys():
             st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> :", unsafe_allow_html=True) 
