@@ -115,10 +115,10 @@ if 'd' not in st.session_state:
     st.session_state.d = 10
 if 'p' not in st.session_state:
     st.session_state.p = 5
-if 'expected_snr' not in st.session_state:
-    st.session_state.expected_snr = 3
+if 'average_snr' not in st.session_state:
+    st.session_state.average_snr = 3
 
-multi_window_detection_indexes, r2, r3, h2, h3 = detection_multi_window(denoised_trace, st.session_state.m, st.session_state.n, st.session_state.q, st.session_state.d, st.session_state.p, st.session_state.alpha, st.session_state.expected_snr, sample_rate)
+multi_window_detection_indexes, r2, r3, h1, h2, h3 = detection_multi_window(denoised_trace, st.session_state.m, st.session_state.n, st.session_state.q, st.session_state.d, st.session_state.p, st.session_state.alpha, st.session_state.average_snr, sample_rate)
 
 
     # REGROUPEMENT
@@ -145,16 +145,13 @@ with st.container(height=110):
 
     for i, type in enumerate(data_types):
         # On place chaque checkbox dans une colonne 
-        if type == "Raw trace" or type == 'Denoised trace':
+        if type == 'Denoised trace':
             cols[i].checkbox(type, key=type, value=True)
         else:
             cols[i].checkbox(type, key=type, value=False)
 
 
-# pour qu'au départ les traces apparaissent par défaut
-if not selected and "Raw trace" not in st.session_state:
-    selected = ["Raw trace"]
-
+# pour qu'au départ la trace lissée apparaisse par défaut
 if not selected and "Denoised trace" not in st.session_state:
     selected = ["Denoised trace"]
 
@@ -168,6 +165,7 @@ for type in data_types:
 # Mise sous forme de DataFrame 
 df = pd.DataFrame(data)
 df['time'] = time
+df['H1'] = h1
 df['H2'] = h2
 df['H3'] = h3
 df['sta_lta_threshold'] = [st.session_state.sta_lta_threshold]*len(denoised_trace)
@@ -177,6 +175,8 @@ df['sta_lta_threshold'] = [st.session_state.sta_lta_threshold]*len(denoised_trac
 colors = {}
 
 for i, type in enumerate(data_types):
+    if i >= 4: 
+        i += 1
     color = px.colors.qualitative.Prism[i % len(px.colors.qualitative.Prism)]
     colors[type] = color
 
@@ -207,9 +207,9 @@ with st.container(height=490):
 
 
     y1_max = 100
-    y2_max = 30
+    y2_max = 30 if "Multi-window" not in selected else max(h1)+10
     fig.update_yaxes(range=[-y1_max, y1_max], secondary_y=False)
-    fig.update_yaxes(range=[-y2_max, y2_max], secondary_y=True)
+    fig.update_yaxes(range=[-y2_max, y2_max], secondary_y=True, dtick=y2_max)
 
 
     for type in data_types :
@@ -225,9 +225,9 @@ with st.container(height=490):
                     fig.add_trace(go.Scatter(
                         x=df["time"], 
                         y=df[type], 
-                        name=type,
+                        name=f"{type} ratio",
                         legendgroup=type,
-                        showlegend=False, # pour afficher une seule fois la légende
+                        showlegend=True,
                         line=dict(dash='dash', color=colors[type]),
                         mode='lines'
                     ), secondary_y=True
@@ -236,9 +236,9 @@ with st.container(height=490):
                     fig.add_trace(go.Scatter(
                         x=df["time"], 
                         y=df['sta_lta_threshold'], 
-                        name=type,
+                        name=f"{type} threshold",
                         legendgroup=type,
-                        showlegend=True, # pour afficher une seule fois la légende
+                        showlegend=True,
                         line=dict(dash='solid', color=colors[type]),
                         mode='lines'
                     ), secondary_y=True
@@ -262,10 +262,9 @@ with st.container(height=490):
                     fig.add_trace(go.Scatter(
                         x=df["time"], 
                         y=df["R2"], 
-                        name=type,
-                        legendgroup=type,
-                        showlegend=False, # pour afficher une seule fois la légende
-                        line=dict(dash='longdash', color=colors[type]),
+                        name=f"{type} r2",
+                        showlegend=True,
+                        line=dict(dash='dot', color="#BEEC25"),
                         mode='lines'
                     ), secondary_y=True
                     )
@@ -273,9 +272,8 @@ with st.container(height=490):
                     fig.add_trace(go.Scatter(
                         x=df["time"], 
                         y=df["R3"], 
-                        name=type,
-                        legendgroup=type,
-                        showlegend=False, # pour afficher une seule fois la légende
+                        name=f"{type} r3",
+                        showlegend=True,
                         line=dict(dash='dot', color=colors[type]),
                         mode='lines'
                     ), secondary_y=True
@@ -283,25 +281,34 @@ with st.container(height=490):
 
                     fig.add_trace(go.Scatter(
                         x=df["time"], 
-                        y=df['H2'], 
-                        name=type,
-                        legendgroup=type,
-                        showlegend=True, # pour afficher une seule fois la légende
-                        line=dict(dash='solid', color=colors[type]),
+                        y=np.abs(denoised_trace), 
+                        name="Absolute value of denoised trace",
+                        showlegend=True,
+                        line=dict(dash='dashdot', color=colors['Denoised trace']),
                         mode='lines'
-                    ), secondary_y=True
+                    ), secondary_y=False
                     )
 
                     fig.add_trace(go.Scatter(
                         x=df["time"], 
-                        y=df['H3'], 
-                        name=type,
-                        legendgroup=type,
-                        showlegend=False, # pour afficher une seule fois la légende
-                        line=dict(dash='solid', color=colors[type]),
+                        y=df['H1'], 
+                        name=f"{type} h1",
+                        showlegend=True,
+                        line=dict(dash='dashdot', color="#13EE9A"),
+                        mode='lines'
+                    ), secondary_y=False
+                    )
+
+                    fig.add_trace(go.Scatter(
+                        x=df["time"], 
+                        y=df['H2'], 
+                        name=f"{type} h2 & h3",
+                        showlegend=True,
+                        line=dict(dash='solid', color="#09D142"),
                         mode='lines'
                     ), secondary_y=True
                     )
+
                 
                 else:
                     fig.add_trace(go.Scatter(
@@ -351,8 +358,8 @@ with st.container(height=490):
                     arrowsize +=30
 
     fig.update_layout(title='Seismic trace through time', legend_title_text='<b>Legend :</b>', xaxis_title='Time', yaxis_title='Amplitude')
-    fig.update_yaxes(range=[-y1_max, y1_max], title_text="<b>Amplitude</b> (Traces)", secondary_y=False)
-    fig.update_yaxes(range=[-y2_max, y2_max], title_text="<b>Amplitude</b> (Methods)", secondary_y=True)
+    fig.update_yaxes(range=[-y1_max, y1_max], title_text="<b>Amplitude</b> (Traces & h1)", secondary_y=False)
+    fig.update_yaxes(range=[-y2_max, y2_max], title_text="<b>Amplitude</b> (Methods)", secondary_y=True, dtick=y2_max)
 
     st.plotly_chart(fig)
 
@@ -401,7 +408,7 @@ with st.container(height=600):
                         st.number_input('Number of shifted samples (for H1 calculation) :', value=5, key='p')
                     with col3:
                         st.number_input('DTA window length :', value=30, key='q')
-                        st.number_input('Expected value of SNR :', value=3, key='expected_snr')
+                        st.number_input('Average value of SNR :', value=3, key='average_snr')
     
                     
 
