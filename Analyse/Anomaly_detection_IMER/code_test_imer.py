@@ -1,10 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from lecture_mseed import lecture_mseed
-
+import sys
+import os
+# Pour trouver un fichier qui n'est pas sous le dossier actuel
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from Lecture_data.lecture_mseed import lecture_mseed
 import numpy as np
 
-def compute_imer(signal, fs, n1_ms=10, n2_ms=30, n3_ms=30, n_avg=10, snr_bas=False):
+def compute_imer(signal, fs, n1_ms, n2_ms, n3_ms, n_avg, snr_bas):
     """
     Code IMER
     """
@@ -51,6 +54,7 @@ def compute_imer(signal, fs, n1_ms=10, n2_ms=30, n3_ms=30, n_avg=10, snr_bas=Fal
     # ETAPE 5 /  Seuillage et pointé
     debut = n2 + n3
     zone_active = imer_curve[debut:]
+    indices_detection = []
 
     if len(zone_active) > 0:
         imer_mean= np.mean(zone_active)
@@ -62,13 +66,14 @@ def compute_imer(signal, fs, n1_ms=10, n2_ms=30, n3_ms=30, n_avg=10, snr_bas=Fal
         threshold = imer_mean * k
 
         indices = np.where(zone_active > threshold)[0]
-        pick_idx = int(indices[0] + debut) if len(indices) > 0 else None
-    
+        for idx in indices:
+            if len(indices_detection) == 0 or int(idx + debut) > indices_detection[-1] + fs * 10: # on attend 10s pour qu'il ne s'agisse pas du même évènement (ou alors s'il y a pas déjà d'autre détection)
+                indices_detection.append(int(idx + debut)) 
+        
     else:
         threshold = 0
-        pick = None
     
-    return imer_curve, threshold, pick_idx, ma12, ma13_shift
+    return imer_curve, threshold, indices_detection, ma12, ma13_shift
 
 
 # ---UTILISATION ---

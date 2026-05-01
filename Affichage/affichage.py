@@ -14,6 +14,8 @@ from Lecture_data.lecture_mseed import lecture_mseed
 from Analyse.Multi_window.implementation import detection_multi_window
 from Analyse.Smoothing.eppf import eppf
 from Analyse.Smoothing.eps import eps
+from Analyse.MER.MER_data import MER, detection_MER
+from Analyse.Anomaly_detection_IMER.code_test_imer import compute_imer
 
 
 
@@ -91,16 +93,17 @@ time = [start_dt + timedelta(seconds=i/sample_rate) for i in range(len(denoised_
 
 
     # STA/LTA
-if 'sta_duration' not in st.session_state:
-    st.session_state.sta_duration = 1
-if 'lta_duration' not in st.session_state:
-    st.session_state.lta_duration = 10
+if 'sta_duration_s' not in st.session_state:
+    st.session_state.sta_duration_s = 1
+if 'lta_duration_s' not in st.session_state:
+    st.session_state.lta_duration_s = 10
 if'sta_lta_threshold' not in st.session_state:
     st.session_state.sta_lta_threshold = 3
 
-ns = int(st.session_state.sta_duration * sample_rate)
-nl = int(st.session_state.lta_duration * sample_rate)
+ns = int(st.session_state.sta_duration_s * sample_rate)
+nl = int(st.session_state.lta_duration_s * sample_rate)
 sta_lta_detection_indexes, sta_lta_ratio = detection_STA_LTA(denoised_trace, ns, nl, st.session_state.sta_lta_threshold, sample_rate)
+
 
     # MULTI-WINDOW
 if 'alpha' not in st.session_state:
@@ -121,9 +124,35 @@ if 'average_snr' not in st.session_state:
 multi_window_detection_indexes, r2, r3, h1, h2, h3 = detection_multi_window(denoised_trace, st.session_state.m, st.session_state.n, st.session_state.q, st.session_state.d, st.session_state.p, st.session_state.alpha, st.session_state.average_snr, sample_rate)
 
 
+    # MER
+if 'window_mer_ms' not in st.session_state:
+    st.session_state.window_mer_ms = 10
+
+mer_ratio = MER(denoised_trace, st.session_state.window_mer_ms, sample_rate)
+mer_threshold_value = np.max(mer_ratio) * 2/3
+mer_detection_indexes = detection_MER(mer_ratio, mer_threshold_value)
+
+
+
+    # IMER
+if 'n1_ms' not in st.session_state:
+    st.session_state.n1_ms = 10
+if 'n2_ms' not in st.session_state:
+    st.session_state.n2_ms = 30
+if 'n3_ms' not in st.session_state:
+    st.session_state.n3_ms = 30
+if 'n_avg' not in st.session_state:
+    st.session_state.n_avg = 10
+if 'snr_bas' not in st.session_state:
+    st.session_state.snr_bas = False
+
+imer_curve, imer_threshold, imer_detection_indexes, ma12, ma13_shift = compute_imer(denoised_trace, sample_rate, st.session_state.n1_ms, st.session_state.n2_ms, st.session_state.n3_ms, st.session_state.n_avg, st.session_state.snr_bas)
+
+
+
     # REGROUPEMENT
-data = {"Raw trace" : raw_trace, "Denoised trace" : denoised_trace, "STA/LTA" : sta_lta_ratio , "R2" : r2, "R3" : r3, "MER" : [0]*len(denoised_trace), "IMER" : [0]*len(denoised_trace)}
-detection_times = {"STA/LTA" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in sta_lta_detection_indexes], "Multi-window" :[start_dt + timedelta(seconds=idx / sample_rate) for idx in multi_window_detection_indexes], "MER" : [], "IMER" : []}
+data = {"Raw trace" : raw_trace, "Denoised trace" : denoised_trace, "STA/LTA" : sta_lta_ratio , "R2" : r2, "R3" : r3, "MER" : mer_ratio , "IMER" : imer_curve}
+detection_times = {"STA/LTA" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in sta_lta_detection_indexes], "Multi-window" :[start_dt + timedelta(seconds=idx / sample_rate) for idx in multi_window_detection_indexes], "MER" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in mer_detection_indexes], "IMER" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in imer_detection_indexes]}
 clustering_results = {"STA/LTA" : "Earthquake", "Multi-window" : "Quake", "MER" : "Earthquake", "IMER" : "Rainfall"}
 
     # DIFFERENTES DONNEES AFFICHABLES
@@ -169,6 +198,7 @@ df['H1'] = h1
 df['H2'] = h2
 df['H3'] = h3
 df['sta_lta_threshold'] = [st.session_state.sta_lta_threshold]*len(denoised_trace)
+df['imer_threshold'] = [imer_threshold]*len(denoised_trace)
 
 
 # couleurs
@@ -218,9 +248,9 @@ with st.container(height=490):
 
             is_secondary = type not in ['Raw trace', 'Denoised trace']
             
-            if type == "STA/LTA":
+            if (not is_secondary) or (len(detection_times[type]) != 0): # si il y a bien une détection
 
-                if len(sta_lta_detection_indexes) != 0: # si il y a bien une détection
+                if type == "STA/LTA":
 
                     fig.add_trace(go.Scatter(
                         x=df["time"], 
@@ -244,20 +274,8 @@ with st.container(height=490):
                     ), secondary_y=True
                     )
 
-                else:
-                    fig.add_trace(go.Scatter(
-                        x=[df["time"].iloc[0]], 
-                        y=[None], 
-                        mode='lines', 
-                        marker=dict(color=colors[type]),
-                        name="STA/LTA : No detection",
-                        showlegend=True
-                    ), 
-                    )
 
-            elif type == "Multi-window":
-
-                if len(multi_window_detection_indexes) != 0: # si il y a bien une détection
+                elif type == "Multi-window":
 
                     fig.add_trace(go.Scatter(
                         x=df["time"], 
@@ -309,21 +327,55 @@ with st.container(height=490):
                     ), secondary_y=True
                     )
 
+                elif type == 'MER':
+                    fig.add_trace(go.Scatter(
+                        x=df["time"], 
+                        y=df[type], 
+                        name=f"{type} ratio",
+                        legendgroup=type,
+                        showlegend=True,
+                        line=dict(dash='dash', color=colors[type]),
+                        mode='lines'
+                    ), secondary_y=True
+                    )
+
+                    fig.add_trace(go.Scatter(
+                        x=df["time"], 
+                        y=df['sta_lta_threshold'], 
+                        name=f"{type} threshold",
+                        legendgroup=type,
+                        showlegend=True,
+                        line=dict(dash='solid', color=colors[type]),
+                        mode='lines'
+                    ), secondary_y=True
+                    )
+                
+                elif type == 'IMER':
+
+                    fig.add_trace(go.Scatter(
+                        x=df["time"], 
+                        y=df[type], 
+                        name=f"{type}",
+                        legendgroup=type,
+                        showlegend=True,
+                        line=dict(dash='dash', color=colors[type]),
+                        mode='lines'
+                    ), secondary_y=True
+                    )
+
+                    fig.add_trace(go.Scatter(
+                        x=df["time"], 
+                        y=df['imer_threshold'], 
+                        name=f"{type} threshold",
+                        legendgroup=type,
+                        showlegend=True,
+                        line=dict(dash='solid', color=colors[type]),
+                        mode='lines'
+                    ), secondary_y=True
+                    )
                 
                 else:
                     fig.add_trace(go.Scatter(
-                        x=[df["time"].iloc[0]], 
-                        y=[None], 
-                        mode='lines', 
-                        marker=dict(color=colors["Multi-window"]),
-                        name="Multi-window: No detection",
-                        showlegend=True
-                    ), 
-                    )
-
-            else:
-
-                fig.add_trace(go.Scatter(
                     x=df["time"], 
                     y=df[type], 
                     name=type,
@@ -333,11 +385,25 @@ with st.container(height=490):
                     secondary_y=is_secondary,
                     )
 
+                
+            else:
+                fig.add_trace(go.Scatter(
+                    x=[df["time"].iloc[0]], 
+                    y=[None], 
+                    mode='lines', 
+                    marker=dict(color=colors[type]),
+                    name=f"{type} : No detection",
+                    showlegend=True
+                ), 
+                )
+
+                
+
     if 'Denoised trace' in selected or 'Raw trace' in selected:
-        arrowsize = 100
+        arrowsize = 60
         time_numeric = [t.timestamp() for t in time] # temps de la trace en format numérique pour numpy
         for method, list_events in detection_times.items():
-            if (method == "STA/LTA" and len(sta_lta_detection_indexes) == 0) or (method == "Multi-window" and len(multi_window_detection_indexes) == 0): # si pas de détection
+            if len(detection_times[method]) == 0: # si pas de détection
                 continue
             else:
                 for i, x_event in enumerate(list_events):
@@ -355,7 +421,6 @@ with st.container(height=490):
                         ay=arrowsize,
                         font=dict(color=colors[method], size=10),
                     )
-                    arrowsize +=30
 
     fig.update_layout(title='Seismic trace through time', legend_title_text='<b>Legend :</b>', xaxis_title='Time', yaxis_title='Amplitude')
     fig.update_yaxes(range=[-y1_max, y1_max], title_text="<b>Amplitude</b> (Traces & h1)", secondary_y=False)
@@ -391,24 +456,40 @@ with st.container(height=600):
                 if type == "STA/LTA":
                     col1, col2, col3 = st.columns(3)
                     with col1:
-                        st.number_input('STA window length :', value=1, key='sta_duration')
+                        st.number_input('STA window length :', value=1, key='sta_duration_s')
                     with col2:
-                        st.number_input('LTA window length :', value=10, key='lta_duration')
+                        st.number_input('LTA window length :', value=10, key='lta_duration_s')
                     with col3:
                         st.number_input('STA/LTA threshold value :', value=3, key='sta_lta_threshold')
 
                 if type == "Multi-window":
-                    col1, col2, col3 = st.columns(3)
+                    col1, col2, col3, col4 = st.columns(4)
                     with col1:
                         st.number_input('BTA window length :', value=40, key='m')
-                        st.number_input('DTA delay :', value=10, key='d')
-                        st.number_input('Coefficient to adjust the height of H1 (α):', value=3, key='alpha')
+                        st.number_input('Number of shifted samples (for H1) :', value=5, key='p')
                     with col2:
                         st.number_input('ATA window length :', value=30, key='n')
-                        st.number_input('Number of shifted samples (for H1 calculation) :', value=5, key='p')
+                        st.number_input('Average value of SNR :', value=3, key='average_snr')
                     with col3:
                         st.number_input('DTA window length :', value=30, key='q')
-                        st.number_input('Average value of SNR :', value=3, key='average_snr')
+                        st.number_input('Coefficient to adjust the height of H1 (α):', value=3, key='alpha')
+                    with col4:
+                        st.number_input('DTA delay :', value=10, key='d')
+
+                if type == "MER":
+                    st.number_input('Window length :', value=10, key='window_mer_ms')
+
+                if type == "IMER":
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.number_input('n1 length :', value=10, key='n1_ms')
+                        st.number_input('Nomber of points (Smoothing) :', value=10, key='n_avg')
+                    with col2:
+                        st.number_input('n2 length :', value=30, key='n2_ms')
+                        st.radio("Low SNR :", ('True', 'False'), key='snr_bas', horizontal=True)
+                    with col3:
+                        st.number_input('n3 length :', value=30, key='n3_ms')
+                    
     
                     
 
@@ -418,11 +499,11 @@ with st.container(height=600):
 
 # 4EME ENCADRÉ (CLUSTERING)
     
-with st.container(height=250):
+with st.container(height=230):
     st.markdown("**Results from clustering :**")
     for type in data_types:
         if type in detection_times.keys():
-            if (type == "STA/LTA" and len(sta_lta_detection_indexes) == 0) or (type == "Multi-window" and len(multi_window_detection_indexes) == 0): # si pas de détection
+            if len(detection_times[type]) == 0: # si pas de détection
                 st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : No detection", unsafe_allow_html=True)
 
             else:
