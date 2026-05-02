@@ -135,19 +135,19 @@ mer_detection_indexes = detection_MER(mer_ratio, mer_threshold_value)
 
 
     # IMER
-if 'n1_ms' not in st.session_state:
-    st.session_state.n1_ms = 10
-if 'n2_ms' not in st.session_state:
-    st.session_state.n2_ms = 30
-if 'n3_ms' not in st.session_state:
-    st.session_state.n3_ms = 30
-if 'n_avg' not in st.session_state:
-    st.session_state.n_avg = 10
+   # IMER
+# if 'n1_ms' not in st.session_state:
+#     st.session_state.n1_ms = 10
+# if 'n2_ms' not in st.session_state:
+#     st.session_state.n2_ms = 30
+# if 'n3_ms' not in st.session_state:
+#     st.session_state.n3_ms = 30
+# if 'n_avg' not in st.session_state:
+#     st.session_state.n_avg = 10
 if 'snr_bas' not in st.session_state:
     st.session_state.snr_bas = False
 
-imer_curve, imer_threshold, imer_detection_indexes, ma12, ma13_shift = compute_imer(denoised_trace, sample_rate, st.session_state.n1_ms, st.session_state.n2_ms, st.session_state.n3_ms, st.session_state.n_avg, st.session_state.snr_bas)
-
+imer_curve, imer_threshold, imer_detection_indexes = compute_imer(denoised_trace, sample_rate,st.session_state.snr_bas)
 
 
     # REGROUPEMENT
