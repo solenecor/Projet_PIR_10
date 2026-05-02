@@ -9,7 +9,8 @@ from Analyse.Smoothing.eppf import eppf
 from Analyse.Smoothing.eps import eps
 
 import numpy as np
-
+###ESSAYER D'AFFICHER PLUSIEURS EVENEMENTS DIFFERENTS
+###trouver un evenment plus ponctuel
 ### ajouter temps d'execution et cout énérgetique 
 
 def compute_imer(signal, fs,snr_bas=False):
@@ -114,19 +115,12 @@ def compute_imer(signal, fs,snr_bas=False):
             else:  
                 i += 1
 
-        # indices = np.where(zone_active > threshold)[0]
-        # if len(indices) > 0:
-        #     for idx in indices:
-        #         picks.append(idx+debut)
-        # else:
-        #     None
-        # pick_idx = int(indices[0] + debut) if len(indices) > 0 else None
     
     else:
         threshold = 0
         pick = None
     
-    return imer_curve, threshold, picks, ma12, ma13_shift
+    return imer_curve, threshold, picks
 
 
 # ---UTILISATION ---
@@ -151,11 +145,16 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
  
     # ---- Données réelles (décommenter si lecture mseed disponible) ----------
+
+            #----------MEILLEURE TRACE POUR TESTER----------------
     # trace_brute = lecture_mseed("GUI_20230310_090649.mseed")[0]['data_samples']
     # fs    = lecture_mseed("GUI_20230310_090649.mseed")[0]['sample_rate_hz']
-    # print(f"Fréquence d'échantillonnage : {fs} Hz")
-    # t     = np.arange(len(trace_brute)) / fs
-    # trace = eps(trace_brute, window_size=5)
+            #----------------------------------------------------
+    trace_brute = lecture_mseed("GUI_20240112_095041.mseed")[0]['data_samples']
+    fs    = lecture_mseed("GUI_20230310_090649.mseed")[0]['sample_rate_hz']       
+    print(f"Fréquence d'échantillonnage : {fs} Hz")
+    t     = np.arange(len(trace_brute)) / fs
+    trace = eps(trace_brute, window_size=5)
     
     # # -------------------------------------------------------------------------
     
@@ -184,7 +183,7 @@ if __name__ == "__main__":
     # persistance_ms = max(1000/fs, nt1_ms/20)     # ms de persistance pour valider un pointé
 
 
-    curve, thresh, picks, ma12, ma13_sh = compute_imer( trace, fs,snr_bas=False)
+    curve, thresh, picks = compute_imer( trace, fs,snr_bas=False)
 
     
  
@@ -203,7 +202,7 @@ if __name__ == "__main__":
 
 
     ## --- Affichage ---
-    fig, axes = plt.subplots(3, 1, figsize=(12, 9), sharex=True)
+    fig, axes = plt.subplots(2, 1, figsize=(12, 9), sharex=True)
     fig.suptitle("IMER — Lee et al. (2017)", fontsize=13)
  
     # Signal brut
@@ -218,22 +217,16 @@ if __name__ == "__main__":
     ax0.legend(fontsize=8)
     ax0.set_title("Signal sismique")
  
-    # MA₁,₂ et MA₁,₃ décalée (intermédiaires)
-    ax1 = axes[1]
-    ax1.plot(t, ma12,   color='steelblue', lw=1,   label="MA₁,₂")
-    ax1.plot(t, ma13_sh, color='darkorange', lw=1, ls='--', label="MA₁,₃ (décalée nt2)")
-    ax1.set_ylabel("MER lissé")
-    ax1.legend(fontsize=8)
-    ax1.set_title("Distributions lissées MA₁,₂ et MA₁,₃ (étape 3 & 4)")
+
  
     # Courbe IMER finale
-    ax2 = axes[2]
-    ax2.plot(t, curve, color='forestgreen', lw=1, label="IMER")
-    ax2.axhline(thresh, color='orange', ls=':', lw=1.5, label=f"Seuil = mean(IMER) = {thresh:.3e}")
-    ax2.set_ylabel("IMER")
-    ax2.set_xlabel("Temps (s)")
-    ax2.legend(fontsize=8)
-    ax2.set_title("Distribution IMER finale et seuil (étape 5)")
+    ax1 = axes[1]
+    ax1.plot(t, curve, color='forestgreen', lw=1, label="IMER")
+    ax1.axhline(thresh, color='orange', ls=':', lw=1.5, label=f"Seuil = mean(IMER) = {thresh:.3e}")
+    ax1.set_ylabel("IMER")
+    ax1.set_xlabel("Temps (s)")
+    ax1.legend(fontsize=8)
+    ax1.set_title("Distribution IMER finale et seuil (étape 5)")
  
     plt.tight_layout()
     plt.show()
