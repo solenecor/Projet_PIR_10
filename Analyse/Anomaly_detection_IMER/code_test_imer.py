@@ -1,25 +1,56 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from Lecture_data.lecture_mseed import lecture_mseed
 from Analyse.Smoothing.eppf import eppf
 from Analyse.Smoothing.eps import eps
 
 import numpy as np
-###ESSAYER D'AFFICHER PLUSIEURS EVENEMENTS DIFFERENTS
-###trouver un evenment plus ponctuel
+
 ### ajouter temps d'execution et cout énérgetique 
 
-def compute_imer(signal, fs, n1_ms=10, n2_ms=30, n3_ms=30, n_avg=10, persistance_ms=5.0, snr_bas=False):
+def compute_imer(signal, fs,snr_bas=False):
     """
     Code IMER
-    """
-    # Conversion des paramètres
-    n1 = max(1, int(n1_ms * fs / 1000))
-    n2 = max(1, int(n2_ms * fs / 1000))
-    n3 = max(1, int(n3_ms * fs / 1000))
     
-    N = len(signal)
+    Paramètres
+    ----------
+    signal         : array-like, signal brut (1D)
+    fs             : float, fréquence d'échantillonnage (Hz)
+    snr_low        : bool,  True → seuil × 3  (S/N < 5, §4 article)
+ 
+    Retourne
+    --------
+    imer_curve  : array, distribution IMER finale
+    threshold   : float, seuil de détection
+    picks       : list[int], indices de TOUS les pointés détectés
+    ma12        : array, MA₁,₂ (debug)
+    ma13_shifted: array, MA₁,₃ décalée (debug)
+    """
+    # Définition des paramètres
+    N=len(signal)
+    duree_s = N / fs
+
+    #n2 = 10% de la durée totale du signal  (bon estimateur du bruit de fond)
+    #borné entre 50ms et 5000ms
+
+    n2_x = np.clip(duree_s * 1000 * 0.10, 50, 2000)
+    n1_x = n2_x /3  # ratio fenêtre courte/longue, cohérent avec l'article
+    nt1=round(n1_x,2)
+    nt2 = round(n2_x, 2)
+    nt3 = nt2       # toujours égal à n2
+    n_avg = 10 # points pour le filtre moyenne mobile (4–10 selon S/N)
+    
+    dt_ms          = 1000 / fs
+    persistance_ms_x= np.clip(n1_x / 10, 3 * dt_ms, n1_x / 4)
+    persistance_ms = round(persistance_ms_x, 2)
+    n1 = max(1, int(nt1 * fs / 1000))
+    n2 = max(1, int(nt2 * fs / 1000))
+    n3 = max(1, int(nt3 * fs / 1000))
+
     signal_clean = signal - np.mean(signal)  # Centrage du signal
     energy = signal_clean**2
 
@@ -120,18 +151,19 @@ if __name__ == "__main__":
     # -------------------------------------------------------------------------
  
     # ---- Données réelles (décommenter si lecture mseed disponible) ----------
-    trace_brute = lecture_mseed("GUI_20251128_110349.mseed")[0]['data_samples']
-    fs    = lecture_mseed("GUI_20251128_110349.mseed")[0]['sample_rate_hz']
-    t     = np.arange(len(trace_brute)) / fs
-    trace = eps(trace_brute, window_size=5)
+    # trace_brute = lecture_mseed("GUI_20230310_090649.mseed")[0]['data_samples']
+    # fs    = lecture_mseed("GUI_20230310_090649.mseed")[0]['sample_rate_hz']
+    # print(f"Fréquence d'échantillonnage : {fs} Hz")
+    # t     = np.arange(len(trace_brute)) / fs
+    # trace = eps(trace_brute, window_size=5)
     
     # # -------------------------------------------------------------------------
     
-    #---- Trace fourni par le tuteur pour des test-----------------
+    #---- Trace fourni par Hugo pour des test-----------------
     # data_folder = "../../trace_capteur"
     # fs = 100  # sampling rate (Hz)
 
-    # # Concatenate data from all file in the data folder
+    # Concatenate data from all file in the data folder
     # all_data = []
     # for fpath in sorted(glob.glob(data_folder + "/geophone_*.dat")):
     #     data = np.fromfile(fpath, dtype=np.int16)
@@ -142,25 +174,30 @@ if __name__ == "__main__":
     #--------------------------------------------------------------
 
     # Paramètres fenêtres
-    D_ms = 1000             # durée estimée d'une impulsion en ms — seul paramètre à fournir
+    # D_ms = 100             # durée estimée d'une impulsion en ms — seul paramètre à fournir
 
 
-    nt1_ms  = D_ms   # ms — fenêtre courte
-    nt2_ms  = 3 * D_ms    # ms — fenêtres longues (nt2 = nt3)
-    nt3_ms  = 3 * D_ms    # ms
-    n_smth  = 10    # points pour le moving average
-    persistance_ms = max(1000/fs, nt1_ms/20)     # ms de persistance pour valider un pointé
+    # nt1_ms  = D_ms   # ms — fenêtre courte
+    # nt2_ms  = 3 * D_ms    # ms — fenêtres longues (nt2 = nt3)
+    # nt3_ms  = 3 * D_ms    # ms
+    # n_smth  = 10    # points pour le moving average
+    # persistance_ms = max(1000/fs, nt1_ms/20)     # ms de persistance pour valider un pointé
 
 
+    curve, thresh, picks, ma12, ma13_sh = compute_imer( trace, fs,snr_bas=False)
+
+    
  
-    curve, thresh, picks, ma12, ma13_sh = compute_imer(
-        trace, fs,
-        n1_ms=nt1_ms, n2_ms=nt2_ms, n3_ms=nt3_ms,
-        n_avg=n_smth, persistance_ms=persistance_ms, snr_bas=False
-    )
+    # curve, thresh, picks, ma12, ma13_sh = compute_imer(
+    #     trace, fs,
+    #     n1_ms=nt1_ms, n2_ms=nt2_ms, n3_ms=nt3_ms,
+    #     n_avg=n_smth, persistance_ms=persistance_ms, snr_bas=False
+    # )
 
     if picks:
-        print(f"{len(picks)} pointé(s) détecté(s) aux indices (échantillons): {picks}") 
+        print(f"{len(picks)} pointé(s) détecté(s)") 
+        for i, p in enumerate(picks):
+            print(f"Pointé {i+1} : t = {t[p]:.4f} s ")
     else:
         print("Aucun pointé détecté.")
 
@@ -176,6 +213,7 @@ if __name__ == "__main__":
     if picks:
         for p in picks:
             ax0.axvline(t[p], color='r', lw=1.5, ls='--')
+        ax0.axvline(t[picks[0]], color='r', lw=1.5, ls='--', label=f"Pointés IMER")
     ax0.set_ylabel("Amplitude")
     ax0.legend(fontsize=8)
     ax0.set_title("Signal sismique")
