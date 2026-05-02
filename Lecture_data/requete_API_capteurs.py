@@ -8,14 +8,14 @@ def requete_api_capteurs():
     # 1. Définition de nos stations cibles (On utilise * pour le canal comme vu précédemment)
     stations_cibles = [
         {"net": "MT", "sta": "GUI", "loc": "00", "cha": "EHZ"},
-        {"net": "MT", "sta": "RES", "loc": "00", "cha": "EHZ"}
+        {"net": "MT", "sta": "RES", "loc": "00", "cha": "*HZ"}
     ]
     #EHZ pour le vertical, EHN pour le nord-sud, EHE pour l'est-ouest (si disponibles)
     #EH* pour prendre tous les canaux verticaux, etc.
 
     # 2. Requête API pour les événements (Tirs de carrière, Mag >= 1.5 pour une belle trace)
     print("Recherche des événements...")
-    url_xml = "https://api.franceseisme.fr/fdsnws/event/1/query?starttime=2023-01-01T00:00:00&endtime=2025-12-01T00:00:00&minlat=43.0&maxlat=45.0&minlon=5.0&maxlon=7.5&eventtype=quarry%20blast&minmag=1.5&limit=5"
+    url_xml = "https://api.franceseisme.fr/fdsnws/event/1/query?starttime=2023-01-01T00:00:00&endtime=2025-12-01T00:00:00&latitude=45.2&longitude=5.7&maxradius=0.5&eventtype=quarry%20blast&minmagnitude=1.5&limit=5"
     response_xml = requests.get(url_xml)    
 
     if response_xml.status_code == 200:
