@@ -128,7 +128,7 @@ if __name__ == "__main__":
     # # -------------------------------------------------------------------------
     
     #---- Trace fourni par le tuteur pour des test-----------------
-    # data_folder = "trace_capteur"
+    # data_folder = "../../trace_capteur"
     # fs = 100  # sampling rate (Hz)
 
     # # Concatenate data from all file in the data folder
