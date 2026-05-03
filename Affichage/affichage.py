@@ -13,6 +13,7 @@ from Analyse.STA_LTA.implementation import detection_STA_LTA
 from Lecture_data.lecture_mseed import lecture_mseed
 from Analyse.Multi_window.implementation import detection_multi_window
 from Analyse.Smoothing.eppf import eppf
+from Analyse.MER.MER_data import MER, detection_MER
 
 
 
@@ -106,10 +107,18 @@ if 'expected_snr' not in st.session_state:
 
 multi_window_detection_indexes, r2, r3, h2, h3 = detection_multi_window(denoised_trace, st.session_state.m, st.session_state.n, st.session_state.q, st.session_state.d, st.session_state.p, st.session_state.alpha, st.session_state.expected_snr, sample_rate)
 
+    # MER
+if 'mer_duration' not in st.session_state:
+    st.session_state.mer_duration = 10
+if 'mer_threshold' not in st.session_state:
+    st.session_state.mer_threshold = 0.6
+
+mer_ratio = MER(denoised_trace, st.session_state.mer_duration, sample_rate)
+mer_detection_time_indexes = [detection_MER(mer_ratio, st.session_state.mer_threshold)[0]]
 
     # REGROUPEMENT
-data = {"Raw trace" : raw_trace, "Denoised trace" : denoised_trace, "STA/LTA" : sta_lta_ratio , "R2" : r2, "R3" : r3, "MER" : [0]*len(denoised_trace), "IMER" : [0]*len(denoised_trace)}
-detection_times = {"STA/LTA" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in sta_lta_detection_indexes], "Multi-window" :[start_dt + timedelta(seconds=idx / sample_rate) for idx in multi_window_detection_indexes], "MER" : [], "IMER" : []}
+data = {"Raw trace" : raw_trace, "Denoised trace" : denoised_trace, "STA/LTA" : sta_lta_ratio , "R2" : r2, "R3" : r3, "MER" : mer_ratio, "IMER" : [0]*len(denoised_trace)}
+detection_times = {"STA/LTA" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in sta_lta_detection_indexes], "Multi-window" :[start_dt + timedelta(seconds=idx / sample_rate) for idx in multi_window_detection_indexes], "MER" : [start_dt + timedelta(seconds=t/sample_rate) for t in mer_detection_time_indexes], "IMER" : []}
 clustering_results = {"STA/LTA" : "Earthquake", "Multi-window" : "Quake", "MER" : "Earthquake", "IMER" : "Rainfall"}
 
     # DIFFERENTES DONNEES AFFICHABLES
@@ -157,6 +166,7 @@ df['time'] = time
 df['H2'] = h2
 df['H3'] = h3
 df['sta_lta_threshold'] = [st.session_state.sta_lta_threshold]*len(denoised_trace)
+df['mer_threshold'] = [st.session_state.mer_threshold*max(denoised_trace)] * len(denoised_trace)
 
 
 # couleurs
@@ -300,6 +310,32 @@ with st.container(height=490):
                     ), 
                     )
 
+            elif type == "MER":
+                print(len(mer_detection_time_indexes))
+                if len(mer_detection_time_indexes) != 0: # si il y a bien une détection
+
+                    fig.add_trace(go.Scatter(
+                        x=df["time"], 
+                        y=df['mer_threshold'], 
+                        name=type,
+                        legendgroup=type,
+                        showlegend=True, # pour afficher une seule fois la légende
+                        line=dict(dash='solid', color=colors[type]),
+                        mode='lines'
+                    ), secondary_y=True
+                    )
+
+                else:
+                    fig.add_trace(go.Scatter(
+                        x=[df["time"].iloc[0]], 
+                        y=[None], 
+                        mode='lines', 
+                        marker=dict(color=colors[type]),
+                        name="MER : No detection",
+                        showlegend=True
+                    ), 
+                    )
+
             else:
 
                 fig.add_trace(go.Scatter(
@@ -316,7 +352,8 @@ with st.container(height=490):
         arrowsize = 100
         time_numeric = [t.timestamp() for t in time] # temps de la trace en format numérique pour numpy
         for method, list_events in detection_times.items():
-            if (method == "STA/LTA" and len(sta_lta_detection_indexes) == 0) or (method == "Multi-window" and len(multi_window_detection_indexes) == 0): # si pas de détection
+            
+            if (method == "STA/LTA" and len(sta_lta_detection_indexes) == 0) or (method == "Multi-window" and len(multi_window_detection_indexes) == 0) or (method == "MER" and len(mer_detection_time_indexes) == 0): # si pas de détection
                 continue
             else:
                 for i, x_event in enumerate(list_events):
@@ -375,6 +412,13 @@ with st.container(height=600):
                     with col3:
                         st.number_input('DTA window length :', value=30, key='q')
                         st.number_input('Expected value of SNR :', value=3, key='expected_snr')
+                    
+                if type == "MER":
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.number_input('MER window length :', value=10, key='mer_duration')
+                    with col2:
+                        st.number_input('MER threshold value :', value=0.6, key='mer_threshold')
     
                     
 
@@ -388,7 +432,7 @@ with st.container(height=250):
     st.markdown("**Results from clustering :**")
     for type in data_types:
         if type in detection_times.keys():
-            if (type == "STA/LTA" and len(sta_lta_detection_indexes) == 0) or (type == "Multi-window" and len(multi_window_detection_indexes) == 0): # si pas de détection
+            if (type == "STA/LTA" and len(sta_lta_detection_indexes) == 0) or (type == "Multi-window" and len(multi_window_detection_indexes) == 0) or (type == "MER" and len(mer_detection_time_indexes) == 0): # si pas de détection
                 st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : No detection", unsafe_allow_html=True)
 
             else:
