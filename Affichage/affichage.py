@@ -127,9 +127,11 @@ multi_window_detection_indexes, r2, r3, h1, h2, h3 = detection_multi_window(deno
     # MER
 if 'window_mer_ms' not in st.session_state:
     st.session_state.window_mer_ms = 10
+if 'threshold_mer_coeff' not in st.session_state:
+    st.session_state.threshold_mer_coeff = 0.67
 
 mer_ratio = MER(denoised_trace, st.session_state.window_mer_ms, sample_rate)
-mer_threshold_value = np.max(mer_ratio) * 2/3
+mer_threshold_value = np.max(mer_ratio) * st.session_state.threshold_mer_coeff
 mer_detection_indexes = detection_MER(mer_ratio, mer_threshold_value)
 
 
@@ -477,7 +479,11 @@ with st.container(height=600):
                         st.number_input('DTA delay :', value=10, key='d')
 
                 if type == "MER":
-                    st.number_input('Window length :', value=10, key='window_mer_ms')
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.number_input('Window length :', value=10, key='window_mer_ms')
+                    with col2:
+                        st.number_input('Threshold coeff value :', value=0.67, key='threshold_mer_coeff')
 
                 if type == "IMER":
                     col1, col2, col3 = st.columns(3)
