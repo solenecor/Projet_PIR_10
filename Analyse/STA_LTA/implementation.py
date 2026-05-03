@@ -2,16 +2,21 @@ import numpy as np
 
 def STA_LTA(trace, i, ns, nl, threshold):
 
-    sta_window = trace[i-ns : i]
-    sta_energy = np.mean(np.square(sta_window))
+    sta_window = trace[max(0,i-ns) : i]
+    lta_window = trace[max(0, i-nl) : i]
 
-    lta_window = trace[i-nl : i]
-    lta_energy = np.mean(np.square(lta_window))
+    sta_energy = 0.0
+    lta_energy = 0.0
+
+    if i != 0 :
+        sta_energy = np.mean(np.square(sta_window))
+
+        lta_energy = np.mean(np.square(lta_window))
 
     if lta_energy != 0:
         ratio = sta_energy/lta_energy
     else :
-        ratio = 0
+        ratio = 1.0
 
     if ratio > threshold:
         is_detected = True
@@ -21,7 +26,7 @@ def STA_LTA(trace, i, ns, nl, threshold):
 
     
 def detection_STA_LTA(trace, ns, nl, threshold, sample_rate):
-    i = nl
+    i = 0
     ratio = [-10] * len(trace)
     detection_indexes = []
     while i < len(trace):

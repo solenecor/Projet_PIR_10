@@ -38,6 +38,7 @@ def affichage_simple_traces(trace_data):
     for trace in trace_data:
                 nslc = trace["network_station_location_channel"]
                 data = trace["data_samples"]
+                fs = trace['sample_rate_hz']
 
                 print(f"Trace {trace['source_id']}, NSLC: {nslc[0]}.{nslc[1]}.{nslc[2]}.{nslc[3]}")
                 print(f"  Time: {trace['start_time']} to {trace['end_time']}")
@@ -51,9 +52,9 @@ def affichage_simple_traces(trace_data):
 
 
                 # Affichage avec matplotlib
-                x = linspace(0, trace['num_samples']*trace['sample_rate_hz'], num=trace['num_samples'])
+                t= np.arange(len(trace_brute)) / fs
                 y = trace["data_samples"]
-                plt.plot(x,y)
+                plt.plot(t,y)
                 plt.show()
 
 

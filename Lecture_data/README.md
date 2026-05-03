@@ -1,7 +1,7 @@
 # Requetes pour récuperer les dataset et les convertir au format numpy
 Nous avons 2 types de requêtes : 
-- requete_API.py pour recupérer les données des stations où l'on déploiera nos capteurs.
-- requete_API_events.py pour récuperer les données enregistrées de stations à proximité d'un événement ( earthquake, quary blast, ...)
+- requete_API_capteurs.py pour recupérer les données des stations où l'on déploiera nos capteurs.
+- requete_API_events.py pour récuperer les données enregistrées de stations quelconques à proximité d'un événement ( earthquake, quary blast, ...)
 
 ## Pré-requis
 Bibliothèques nécessaires : 
@@ -11,19 +11,23 @@ pip install lxml
 pip install numpy
 ````
 ## requete_API.py
-Ce code crée un fichier event.mseed qui est exploitable avec la fonction __lecture_mseed__ disponible dans lecture_mseed.py (pour avoir une trace au format numpy). 
+Ce code crée des fichier event.mseed qui sont exploitables avec la fonction __lecture_mseed__ disponible dans lecture_mseed.py (pour avoir une trace au format numpy).
+Ces fichiers contiennent des événements (par défaut quarry blast).
 
 Utilisation :
-- Lancer requete_API.py (création du fichier)
+- Lancer requete_API_capteurs.py (création des fichiers)
 - Pour utiliser la trace dans votre code, faites
 ```
+from lecture_mseed import lecture_mseed
 trace = lecture_mseed("event.mseed")[0]['data_samples']
 ```
 Pour avoir la fréquence :
 ```
 fs = lecture_mseed("event.mseed")[0]['sample_rate_hz']
 ```
-Vous pouvez modifier la durée de la trace en manipulant l'url line 4 aux paramètres starttime et endtime.
+Vous pouvez modifier la periode concernée de la trace en manipulant l'url line 18 aux paramètres starttime et endtime. De même vous pouvez modifier le type dé'événement cherché. 
+La fenêtre est modifiable aux lines 45 & 46.
+
 
 ## requete_API_events.py
 Ce code crée 3 fichiers event_[station].mseed qui sont exploitables avec la fonction __lecture_mseed__ disponible dans lecture_mseed.py (pour avoir une trace au format numpy).

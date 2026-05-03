@@ -45,7 +45,7 @@ def detection_MER(mer, seuil):
     detect = []
     for t in range(len(mer)):
         if mer[t] >= seuil:
-            if not (detect != [] and t-detect[-1] <= 30):
+            if not (detect != [] and t-detect[-1] <= 10):
                 detect.append(t)
     return detect
 
