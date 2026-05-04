@@ -34,7 +34,7 @@ def distance_L1(u, v):
     Sortie :
         d : float numpy
     """
-    d = sum(np.abs(u - v))
+    d = sum(np.abs(u - v))        
     return d
 
 def distance_L2(u, v): 

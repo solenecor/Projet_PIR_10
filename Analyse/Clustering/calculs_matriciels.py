@@ -60,10 +60,6 @@ def matrice_distance_globale(matrices) :
     for i in range(len(matrices[0])) :
         for j in range(len(matrices[0])) :
             m_d[i, j] = np.mean([matrices[k][i][j] for k in range(len(matrices))])
-    
-    # Normalisation de la matrice :
-    norme = np.linalg.norm(m_d)
-    m_d = m_d / norme
 
     return m_d
 
@@ -83,16 +79,12 @@ def matrice_distance_globale_autres(series, f_distance) :
         for j in range(len(series)):
             if i != j:
                 m_d[i, j] = f_distance(series[i], series[j])
-    
-    # Normalisation de la matrice :
-    norme = np.linalg.norm(m_d)
-    m_d = m_d / norme
 
     return m_d
 
 
 ### Calcul de la matrice de similarité :
-def matrice_similarite(m_distance) :
+def matrice_similarite(m_distance, sigma) :
     """
     Calcul de la matrice de similarité à partir de la matrice de distance globale
     Entrées : 
@@ -106,7 +98,7 @@ def matrice_similarite(m_distance) :
             if (i == j) :
                 m_s[i, j] = 1
             else :
-                m_s[i, j] = 1 - m_distance[i, j]
+                m_s[i,j] = np.exp(-m_distance[i, j] / sigma)
     
     return m_s
 
