@@ -466,16 +466,16 @@ with st.container(height=600):
                 if type == "Multi-window":
                     col1, col2, col3, col4 = st.columns(4)
                     with col1:
-                        st.number_input('BTA window length (points):', value=40, key='m')
+                        st.number_input('BTA window length (samples):', value=40, key='m')
                         st.number_input('Number of shifted samples (for H1) :', value=5, key='p')
                     with col2:
-                        st.number_input('ATA window length (points) :', value=30, key='n')
+                        st.number_input('ATA window length (samples) :', value=30, key='n')
                         st.number_input('Average value of SNR :', value=3, key='average_snr')
                     with col3:
-                        st.number_input('DTA window length (points):', value=30, key='q')
+                        st.number_input('DTA window length (samples):', value=30, key='q')
                         st.number_input('Coefficient to adjust the height of H1 (α):', value=3, key='alpha')
                     with col4:
-                        st.number_input('DTA delay (points):', value=10, key='d')
+                        st.number_input('DTA delay (samples):', value=10, key='d')
 
                 if type == "MER":
                     col1, col2 = st.columns(2)
