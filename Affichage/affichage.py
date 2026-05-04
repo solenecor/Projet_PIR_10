@@ -217,7 +217,7 @@ df['H3'] = h3
 df['sta_lta_threshold'] = [st.session_state.sta_lta_threshold]*len(denoised_trace)
 df['imer_threshold'] = [imer_threshold]*len(denoised_trace)
 df['mer_threshold'] = [mer_threshold_value]*len(denoised_trace)
-df['dter_threshold'] = [tder_threshold_value]*len(denoised_trace)
+df['tder_threshold'] = [tder_threshold_value]*len(denoised_trace)
 
 
 # couleurs
