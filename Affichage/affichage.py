@@ -237,8 +237,8 @@ with st.container(height=490):
     )
 
 
-    y1_max = 700
-    y2_max = 30 if "Multi-window" not in selected else max(h1)+10
+    y1_max = max(data["Raw trace"]) if 'Raw trace' in selected else max(data['Denoised trace'])
+    y2_max = 30
     fig.update_yaxes(range=[-y1_max, y1_max], secondary_y=False)
     fig.update_yaxes(range=[-y2_max, y2_max], secondary_y=True, dtick=y2_max)
 
@@ -247,7 +247,7 @@ with st.container(height=490):
 
         if type in selected:
 
-            is_secondary = type not in ['Raw trace', 'Denoised trace', 'IMER']
+            is_secondary = type not in ['Raw trace', 'Denoised trace']
             
             if (not is_secondary) or (len(detection_times[type]) != 0): # si il y a bien une détection
 
@@ -424,7 +424,7 @@ with st.container(height=490):
                     )
 
     fig.update_layout(title='Seismic trace through time', legend_title_text='<b>Legend :</b>', xaxis_title='Time', yaxis_title='Amplitude')
-    fig.update_yaxes(range=[-y1_max, y1_max], title_text="<b>Amplitude</b> (Traces, h1 & IMER)", secondary_y=False)
+    fig.update_yaxes(range=[-y1_max, y1_max], title_text="<b>Amplitude</b> (Traces & h1)", secondary_y=False)
     fig.update_yaxes(range=[-y2_max, y2_max], title_text="<b>Amplitude</b> (Methods)", secondary_y=True, dtick=y2_max)
 
     st.plotly_chart(fig)
