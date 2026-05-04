@@ -16,6 +16,7 @@ from Analyse.Smoothing.eppf import eppf
 from Analyse.Smoothing.eps import eps
 from Analyse.MER.MER_data import MER, detection_MER
 from Analyse.Anomaly_detection_IMER.code_test_imer import compute_imer
+from Analyse.TDER.TDER import TDER, detection_TDER
 
 
 
@@ -151,13 +152,28 @@ if 'snr_bas' not in st.session_state:
 imer_curve, imer_threshold, imer_detection_indexes = compute_imer(denoised_trace, sample_rate, st.session_state.snr_bas)
 
 
+    # TDER
+if 'sw' not in st.session_state:
+    st.session_state.sw = 0.05
+if 'lw' not in st.session_state:
+    st.session_state.lw = 0.3
+
+tder_ratio = TDER(denoised_trace, st.session_state.sw, st.session_state.lw, sample_rate)
+
+if 'threshold_mer_coeff' not in st.session_state:
+    st.session_state.threshold_tder_coeff = seuil_tder = np.mean(tder_ratio) + 2*np.std(tder_ratio)
+
+tder_threshold_value = np.max(mer_ratio) * st.session_state.threshold_mer_coeff
+tder_detection_indexes = detection_TDER(tder_ratio, tder_threshold_value)
+
+
     # REGROUPEMENT
-data = {"Raw trace" : raw_trace, "Denoised trace" : denoised_trace, "STA/LTA" : sta_lta_ratio , "R2" : r2, "R3" : r3, "MER" : mer_ratio , "IMER" : imer_curve}
-detection_times = {"STA/LTA" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in sta_lta_detection_indexes], "Multi-window" :[start_dt + timedelta(seconds=idx / sample_rate) for idx in multi_window_detection_indexes], "MER" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in mer_detection_indexes], "IMER" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in imer_detection_indexes]}
-clustering_results = {"STA/LTA" : "Earthquake", "Multi-window" : "Quake", "MER" : "Earthquake", "IMER" : "Rainfall"}
+data = {"Raw trace" : raw_trace, "Denoised trace" : denoised_trace, "STA/LTA" : sta_lta_ratio , "R2" : r2, "R3" : r3, "MER" : mer_ratio , "IMER" : imer_curve, "TDER" : tder_ratio}
+detection_times = {"STA/LTA" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in sta_lta_detection_indexes], "Multi-window" :[start_dt + timedelta(seconds=idx / sample_rate) for idx in multi_window_detection_indexes], "MER" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in mer_detection_indexes], "IMER" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in imer_detection_indexes], "TDER" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in tder_detection_indexes]}
+clustering_results = {"STA/LTA" : "Earthquake", "Multi-window" : "Quake", "MER" : "Earthquake", "IMER" : "Rainfall", "TDER" : 'Quake'}
 
     # DIFFERENTES DONNEES AFFICHABLES
-data_types = ["Raw trace", "Denoised trace", "STA/LTA", "Multi-window", "MER", "IMER"]
+data_types = ["Raw trace", "Denoised trace", "STA/LTA", "Multi-window", "MER", "IMER", 'TDER']
 selected = []
 
 
@@ -200,6 +216,8 @@ df['H2'] = h2
 df['H3'] = h3
 df['sta_lta_threshold'] = [st.session_state.sta_lta_threshold]*len(denoised_trace)
 df['imer_threshold'] = [imer_threshold]*len(denoised_trace)
+df['mer_threshold'] = [mer_threshold_value]*len(denoised_trace)
+df['dter_threshold'] = [tder_threshold_value]*len(denoised_trace)
 
 
 # couleurs
@@ -342,7 +360,7 @@ with st.container(height=490):
 
                     fig.add_trace(go.Scatter(
                         x=df["time"], 
-                        y=df['sta_lta_threshold'], 
+                        y=df['mer_threshold'], 
                         name=f"{type} threshold",
                         legendgroup=type,
                         showlegend=True,
@@ -374,6 +392,31 @@ with st.container(height=490):
                         mode='lines'
                     ), secondary_y=True
                     )
+
+                elif type == 'TDER':
+
+                    fig.add_trace(go.Scatter(
+                        x=df["time"], 
+                        y=df[type], 
+                        name=f"{type}",
+                        legendgroup=type,
+                        showlegend=True,
+                        line=dict(dash='dash', color=colors[type]),
+                        mode='lines'
+                    ), secondary_y=True
+                    )
+
+                    fig.add_trace(go.Scatter(
+                        x=df["time"], 
+                        y=df['tder_threshold'], 
+                        name=f"{type} threshold",
+                        legendgroup=type,
+                        showlegend=True,
+                        line=dict(dash='solid', color=colors[type]),
+                        mode='lines'
+                    ), secondary_y=True
+                    )
+
                 
                 else:
                     fig.add_trace(go.Scatter(
@@ -436,7 +479,7 @@ with st.container(height=490):
 
 
 # 3EME ENCADRÉ (PARAMETRES)
-with st.container(height=600):
+with st.container(height=800):
     st.markdown("**Parameters :**")
 
     st.markdown(f"<span style='color:{colors['Denoised trace']}; font-weight:bold;'>Denoised trace</span> :", unsafe_allow_html=True) 
@@ -495,6 +538,13 @@ with st.container(height=600):
                         st.radio("Low SNR :", ('True', 'False'), key='snr_bas', horizontal=True)
                     with col3:
                         st.number_input('n3 length (ms):', value=30, key='n3_ms')
+
+                if type == "TDER":
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.number_input('Short window length (s) :', value=0.05, key='sw')
+                    with col2:
+                        st.number_input('Long window length (s) :', value=0.3, key='lw')
                     
     
                     
@@ -505,7 +555,7 @@ with st.container(height=600):
 
 # 4EME ENCADRÉ (CLUSTERING)
     
-with st.container(height=230):
+with st.container(height=300):
     st.markdown("**Results from clustering :**")
     for type in data_types:
         if type in detection_times.keys():
