@@ -132,8 +132,8 @@ if 'threshold_mer_coeff' not in st.session_state:
     st.session_state.threshold_mer_coeff = 0.67
 
 mer_ratio = MER(denoised_trace, st.session_state.window_mer_ms, sample_rate)
-mer_threshold_value = np.max(mer_ratio) * st.session_state.threshold_mer_coeff
-mer_detection_indexes = detection_MER(mer_ratio, mer_threshold_value)
+mer_threshold = np.max(mer_ratio) * st.session_state.threshold_mer_coeff
+mer_detection_indexes = detection_MER(mer_ratio, mer_threshold)
 
 
 
@@ -160,11 +160,10 @@ if 'lw' not in st.session_state:
 
 tder_ratio = TDER(denoised_trace, st.session_state.sw, st.session_state.lw, sample_rate)
 
-if 'threshold_mer_coeff' not in st.session_state:
-    st.session_state.threshold_tder_coeff = seuil_tder = np.mean(tder_ratio) + 2*np.std(tder_ratio)
+if 'tder_threshold' not in st.session_state:
+    st.session_state.tder_threshold = seuil_tder = np.mean(tder_ratio) + 2*np.std(tder_ratio)
 
-tder_threshold_value = np.max(mer_ratio) * st.session_state.threshold_mer_coeff
-tder_detection_indexes = detection_TDER(tder_ratio, tder_threshold_value)
+tder_detection_indexes = detection_TDER(tder_ratio, st.session_state.tder_threshold)
 
 
     # REGROUPEMENT
@@ -216,8 +215,8 @@ df['H2'] = h2
 df['H3'] = h3
 df['sta_lta_threshold'] = [st.session_state.sta_lta_threshold]*len(denoised_trace)
 df['imer_threshold'] = [imer_threshold]*len(denoised_trace)
-df['mer_threshold'] = [mer_threshold_value]*len(denoised_trace)
-df['tder_threshold'] = [tder_threshold_value]*len(denoised_trace)
+df['mer_threshold'] = [mer_threshold]*len(denoised_trace)
+df['tder_threshold'] = [st.session_state.tder_threshold]*len(denoised_trace)
 
 
 # couleurs
