@@ -62,7 +62,7 @@ st.title("Detection of the first arrival on a seismic trace")
 # DONNEES
 
     # TRACE
-trace_file = "../event.mseed"
+trace_file = "../GUI_20230103_090203.mseed"
 
 data_trace = lecture_mseed(trace_file)
 raw_trace = data_trace[0]["data_samples"]
@@ -137,19 +137,18 @@ mer_detection_indexes = detection_MER(mer_ratio, mer_threshold_value)
 
 
     # IMER
-   # IMER
-# if 'n1_ms' not in st.session_state:
-#     st.session_state.n1_ms = 10
-# if 'n2_ms' not in st.session_state:
-#     st.session_state.n2_ms = 30
-# if 'n3_ms' not in st.session_state:
-#     st.session_state.n3_ms = 30
-# if 'n_avg' not in st.session_state:
-#     st.session_state.n_avg = 10
+if 'n1_ms' not in st.session_state:
+    st.session_state.n1_ms = 10
+if 'n2_ms' not in st.session_state:
+    st.session_state.n2_ms = 30
+if 'n3_ms' not in st.session_state:
+    st.session_state.n3_ms = 30
+if 'n_avg' not in st.session_state:
+    st.session_state.n_avg = 10
 if 'snr_bas' not in st.session_state:
     st.session_state.snr_bas = False
 
-imer_curve, imer_threshold, imer_detection_indexes = compute_imer(denoised_trace, sample_rate,st.session_state.snr_bas)
+imer_curve, imer_threshold, imer_detection_indexes = compute_imer(denoised_trace, sample_rate, st.session_state.snr_bas)
 
 
     # REGROUPEMENT
@@ -238,7 +237,7 @@ with st.container(height=490):
     )
 
 
-    y1_max = 100
+    y1_max = 700
     y2_max = 30 if "Multi-window" not in selected else max(h1)+10
     fig.update_yaxes(range=[-y1_max, y1_max], secondary_y=False)
     fig.update_yaxes(range=[-y2_max, y2_max], secondary_y=True, dtick=y2_max)
@@ -248,7 +247,7 @@ with st.container(height=490):
 
         if type in selected:
 
-            is_secondary = type not in ['Raw trace', 'Denoised trace']
+            is_secondary = type not in ['Raw trace', 'Denoised trace', 'IMER']
             
             if (not is_secondary) or (len(detection_times[type]) != 0): # si il y a bien une détection
 
@@ -418,14 +417,14 @@ with st.container(height=490):
                         showarrow=True,
                         arrowhead=2,
                         arrowwidth=1,
-                        arrowcolor= 'white',
+                        arrowcolor= colors[method],
                         ax=0,
                         ay=arrowsize,
                         font=dict(color=colors[method], size=10),
                     )
 
     fig.update_layout(title='Seismic trace through time', legend_title_text='<b>Legend :</b>', xaxis_title='Time', yaxis_title='Amplitude')
-    fig.update_yaxes(range=[-y1_max, y1_max], title_text="<b>Amplitude</b> (Traces & h1)", secondary_y=False)
+    fig.update_yaxes(range=[-y1_max, y1_max], title_text="<b>Amplitude</b> (Traces, h1 & IMER)", secondary_y=False)
     fig.update_yaxes(range=[-y2_max, y2_max], title_text="<b>Amplitude</b> (Methods)", secondary_y=True, dtick=y2_max)
 
     st.plotly_chart(fig)
@@ -458,43 +457,43 @@ with st.container(height=600):
                 if type == "STA/LTA":
                     col1, col2, col3 = st.columns(3)
                     with col1:
-                        st.number_input('STA window length :', value=1, key='sta_duration_s')
+                        st.number_input('STA window length (s):', value=1, key='sta_duration_s')
                     with col2:
-                        st.number_input('LTA window length :', value=10, key='lta_duration_s')
+                        st.number_input('LTA window length (s):', value=10, key='lta_duration_s')
                     with col3:
                         st.number_input('STA/LTA threshold value :', value=3, key='sta_lta_threshold')
 
                 if type == "Multi-window":
                     col1, col2, col3, col4 = st.columns(4)
                     with col1:
-                        st.number_input('BTA window length :', value=40, key='m')
+                        st.number_input('BTA window length (points):', value=40, key='m')
                         st.number_input('Number of shifted samples (for H1) :', value=5, key='p')
                     with col2:
-                        st.number_input('ATA window length :', value=30, key='n')
+                        st.number_input('ATA window length (points) :', value=30, key='n')
                         st.number_input('Average value of SNR :', value=3, key='average_snr')
                     with col3:
-                        st.number_input('DTA window length :', value=30, key='q')
+                        st.number_input('DTA window length (points):', value=30, key='q')
                         st.number_input('Coefficient to adjust the height of H1 (α):', value=3, key='alpha')
                     with col4:
-                        st.number_input('DTA delay :', value=10, key='d')
+                        st.number_input('DTA delay (points):', value=10, key='d')
 
                 if type == "MER":
                     col1, col2 = st.columns(2)
                     with col1:
-                        st.number_input('Window length :', value=10, key='window_mer_ms')
+                        st.number_input('Window length (ms) :', value=10, key='window_mer_ms')
                     with col2:
-                        st.number_input('Threshold coeff value :', value=0.67, key='threshold_mer_coeff')
+                        st.number_input('Threshold coefficient value :', value=0.67, key='threshold_mer_coeff')
 
                 if type == "IMER":
                     col1, col2, col3 = st.columns(3)
                     with col1:
-                        st.number_input('n1 length :', value=10, key='n1_ms')
+                        st.number_input('n1 length (ms):', value=10, key='n1_ms')
                         st.number_input('Nomber of points (Smoothing) :', value=10, key='n_avg')
                     with col2:
-                        st.number_input('n2 length :', value=30, key='n2_ms')
+                        st.number_input('n2 length (ms):', value=30, key='n2_ms')
                         st.radio("Low SNR :", ('True', 'False'), key='snr_bas', horizontal=True)
                     with col3:
-                        st.number_input('n3 length :', value=30, key='n3_ms')
+                        st.number_input('n3 length (ms):', value=30, key='n3_ms')
                     
     
                     
