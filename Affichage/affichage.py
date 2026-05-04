@@ -98,7 +98,7 @@ if 'sta_duration_s' not in st.session_state:
 if 'lta_duration_s' not in st.session_state:
     st.session_state.lta_duration_s = 10
 if'sta_lta_threshold' not in st.session_state:
-    st.session_state.sta_lta_threshold = 3
+    st.session_state.sta_lta_threshold = 4
 
 ns = int(st.session_state.sta_duration_s * sample_rate)
 nl = int(st.session_state.lta_duration_s * sample_rate)
@@ -401,7 +401,7 @@ with st.container(height=490):
                 
 
     if 'Denoised trace' in selected or 'Raw trace' in selected:
-        arrowsize = 60
+        arrowsize = 30
         time_numeric = [t.timestamp() for t in time] # temps de la trace en format numérique pour numpy
         for method, list_events in detection_times.items():
             if len(detection_times[method]) == 0: # si pas de détection
@@ -413,7 +413,7 @@ with st.container(height=490):
                     fig.add_annotation(
                         x=x_event,
                         y=y_point,
-                        text=f"Detection time {method} : {x_event.strftime('%H:%M:%S:%f')[:-4]}",
+                        text=f"{method} : {x_event.strftime('%H:%M:%S:%f')[:-4]}",
                         showarrow=True,
                         arrowhead=2,
                         arrowwidth=1,
@@ -422,6 +422,7 @@ with st.container(height=490):
                         ay=arrowsize,
                         font=dict(color=colors[method], size=10),
                     )
+                arrowsize += 15    
 
     fig.update_layout(title='Seismic trace through time', legend_title_text='<b>Legend :</b>', xaxis_title='Time', yaxis_title='Amplitude')
     fig.update_yaxes(range=[-y1_max, y1_max], title_text="<b>Amplitude</b> (Traces & h1)", secondary_y=False)
@@ -461,7 +462,7 @@ with st.container(height=600):
                     with col2:
                         st.number_input('LTA window length (s):', value=10, key='lta_duration_s')
                     with col3:
-                        st.number_input('STA/LTA threshold value :', value=3, key='sta_lta_threshold')
+                        st.number_input('STA/LTA threshold value :', value=4, key='sta_lta_threshold')
 
                 if type == "Multi-window":
                     col1, col2, col3, col4 = st.columns(4)
