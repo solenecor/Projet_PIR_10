@@ -62,7 +62,7 @@ st.title("Detection of the first arrival on a seismic trace")
 # DONNEES
 
     # TRACE
-trace_file = "../GUI_20230103_090203.mseed"
+trace_file = "../donnees_capteur.mseed"
 
 data_trace = lecture_mseed(trace_file)
 raw_trace = data_trace[0]["data_samples"]
