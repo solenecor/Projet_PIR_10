@@ -91,6 +91,18 @@ if 'wait_time' not in st.session_state:
 if 'trace_choice' not in st.session_state:
     st.session_state.trace_choice = 'Denoised trace'
 
+
+# pour que la trace analysée s'affiche par défaut quand on change la case cochée
+
+if 'previous_trace_choice' not in st.session_state:
+    st.session_state.previous_trace_choice = st.session_state.trace_choice
+if st.session_state.trace_choice != st.session_state.previous_trace_choice:
+    if st.session_state.trace_choice == 'Raw trace':
+        st.session_state['Raw trace'] = True
+    else:
+        st.session_state['Denoised trace'] = True
+    st.session_state.previous_trace_choice = st.session_state.trace_choice
+
 analysed_trace = denoised_trace if st.session_state.trace_choice == 'Denoised trace' else raw_trace
 
 
@@ -152,7 +164,6 @@ if 'snr_bas' not in st.session_state:
     st.session_state.snr_bas = False
 
 imer_curve, imer_threshold, imer_detection_indexes = compute_imer(analysed_trace, sample_rate, st.session_state.snr_bas, st.session_state.wait_time)
-st.write(f"IMER picks: {imer_detection_indexes}, threshold: {imer_threshold:.6f}")
 
 
     # TDER
@@ -319,8 +330,8 @@ with st.container(height=490):
 
                     fig.add_trace(go.Scatter(
                         x=df["time"], 
-                        y=np.abs(denoised_trace), 
-                        name="Absolute value of denoised trace",
+                        y=np.abs(analysed_trace), 
+                        name=f"Absolute value of {st.session_state.trace_choice}",
                         showlegend=True,
                         line=dict(dash='dashdot', color=colors['Denoised trace']),
                         mode='lines'
@@ -496,8 +507,6 @@ with st.container(height=800):
             st.number_input('Window size :', value=5, key='window_eps')
 
     st.radio("Trace analysed :", ('Denoised trace', 'Raw trace'), horizontal=True, key='trace_choice')
-
-
     
     st.number_input('Wait time for new detection (s):', value=10, key='wait_time')
 
