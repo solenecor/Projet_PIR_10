@@ -17,6 +17,7 @@ from Analyse.Smoothing.eps import eps
 from Analyse.MER.MER_data import MER, detection_MER
 from Analyse.Anomaly_detection_IMER.code_test_imer import compute_imer
 from Analyse.TDER.TDER import TDER, detection_TDER
+from Analyse.Smoothing.wavelet import wavelet_transform
 
 
 
@@ -68,19 +69,25 @@ trace_file = "../donnees_capteur1.mseed"
 data_trace = lecture_mseed(trace_file)
 raw_trace = data_trace[0]["data_samples"]
 if 'denoising_method' not in st.session_state:
-    st.session_state.denoising_method = 'EPPF'
+    st.session_state.denoising_method = 'EPS'
 if 'window_eppf' not in st.session_state:
     st.session_state.window_eppf = 81
 if 'degree_eppf' not in st.session_state:
     st.session_state.degree_eppf = 2
 if 'window_eps' not in st.session_state:
     st.session_state.window_eps = 5
+if 'wavelet_type' not in st.session_state:
+    st.session_state.wavelet_type = 'haar'
+if 'decomposition_level' not in st.session_state:
+    st.session_state.decomposition_level = 5
 
 
 if st.session_state.denoising_method == 'EPPF':
     denoised_trace = eppf(raw_trace, st.session_state.window_eppf, st.session_state.degree_eppf)
-else:
+elif st.session_state.denoising_method == 'EPS':
     denoised_trace = eps(raw_trace, st.session_state.window_eps)
+else:
+    denoised_trace = wavelet_transform(raw_trace, st.session_state.wavelet_type, st.session_state.decomposition_level)
 
 sample_rate = data_trace[0]["sample_rate_hz"]
 
@@ -513,7 +520,7 @@ with st.container(height=1100):
     )
 
     st.markdown(f"<span style='color:{colors['Denoised trace']}; font-weight:bold;'>Denoised trace :</span>", unsafe_allow_html=True) 
-    method = st.radio("Method :", ('EPPF', 'EPS'), key='denoising_method', horizontal=True, label_visibility="collapsed")
+    method = st.radio("Method :", ('EPS', 'EPPF', 'Wavelet transform'), key='denoising_method', horizontal=True, label_visibility="collapsed")
     with st.expander("Show parameters"):
         if method == 'EPPF':
             c1, c2 = st.columns(2)
@@ -521,8 +528,15 @@ with st.container(height=1100):
                 st.number_input('Window size :', value=81, key='window_eppf')
             with c2:
                 st.number_input('Degree :', value=2, key='degree_eppf')
-        else:
+        elif method == 'EPS':
             st.number_input('Window size :', value=5, key='window_eps')
+        else:
+            c1, c2 = st.columns(2)
+            with c1:
+                st.selectbox('Type of Wavelet :', ('haar', 'db2', 'db3', 'db4', 'sym2', 'sym4', 'coif1', 'coif2'), key='wavelet_type')
+            with c2:
+                st.number_input('Number of decomposition levels :', value=5, key='decomposition_level')
+
 
     st.radio("**Trace analysed :**", ('Denoised trace', 'Raw trace'), horizontal=True, key='trace_choice')
     
