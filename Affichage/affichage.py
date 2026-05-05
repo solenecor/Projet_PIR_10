@@ -215,18 +215,18 @@ selected = []
 
 # 1ER ENCADRÉ (CHECKBOXES)
 
-with st.container(height=110):
+with st.container(height=150):
     st.markdown("**Displayed data :**")
 
-        # On crée autant de colonnes que de données à afficher
-    cols = st.columns(len(data_types))
+        # On crée autant de colonnes que de données à afficher / 2
+    cols = st.columns(len(data_types)//2)
 
     for i, type in enumerate(data_types):
         # On place chaque checkbox dans une colonne 
         if type == 'Denoised trace':
-            cols[i].checkbox(type, key=type, value=True)
+            cols[i%4].checkbox(type, key=type, value=True)
         else:
-            cols[i].checkbox(type, key=type, value=False)
+            cols[i%4].checkbox(type, key=type, value=False)
 
 
 # pour qu'au départ la trace lissée apparaisse par défaut
@@ -537,7 +537,7 @@ with st.container(height=490):
 
 
 # 3EME ENCADRÉ (PARAMETRES)
-with st.container(height=1100):
+with st.container(height=1300):
     st.markdown("**Parameters :**")
 
     start_time, end_time = st.slider("**Select the part of the trace to analyse :**",
