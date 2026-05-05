@@ -3,6 +3,7 @@ from random import randint
 import matplotlib.pyplot as plt
 from lecture_mseed import *
 import glob
+import time
 
 def DER(signal, sw, lw, fs):
     ns = int(sw*fs)
@@ -97,17 +98,32 @@ if __name__=="__main__":
         data = np.fromfile(fpath, dtype=np.int16)
         all_data.append(data)
     trace = np.array(np.concatenate(all_data), dtype=np.float64)
-
+    """
+    trace = lecture_mseed("event.mseed")[0]['data_samples']
+    fs = lecture_mseed("event.mseed")[0]['sample_rate_hz']
+    """
     sw = 0.05  # short window length in s
     lw = 0.3 # long window length in s
 
     ### Test
+    deb_der = time.time()
     Der = DER(trace, sw, lw, fs)
-    Tder = TDER(trace, sw, lw, fs)
+    fin_cal_der = time.time()
     seuil_der = np.mean(Der) + 2*np.std(Der)
+    det_der = detection_DER(Der, seuil_der)
+    fin_det_der = time.time()
+
+    deb_tder = time.time()
+    Tder = TDER(trace, sw, lw, fs)
+    fin_cal_tder = time.time()
     seuil_tder = np.mean(Tder) + 2*np.std(Tder)
-    print(f"DER : {detection_DER(Der, seuil_der)}")
-    print(f"TDER : {detection_TDER(Tder, seuil_tder)}")
+    det_tder = detection_TDER(Tder, seuil_tder)
+    fin_det_tder = time.time()
+
+    print(f"DER : {det_der}")
+    print(f"TDER : {det_tder}")
+    print(f"Temps calcul DER : {fin_cal_der-deb_der}    Temps détection DER : {fin_det_der-deb_der}")
+    print(f"Temps calcul TDER : {fin_cal_tder-deb_tder}    Temps détection TDER : {fin_det_tder-deb_tder}")
 
     ### Affichage
     plt.figure()
