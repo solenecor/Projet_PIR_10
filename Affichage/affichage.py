@@ -491,7 +491,7 @@ with st.container(height=490):
 
 
 # 3EME ENCADRÉ (PARAMETRES)
-with st.container(height=800):
+with st.container(height=900):
     st.markdown("**Parameters :**")
 
     st.markdown(f"<span style='color:{colors['Denoised trace']}; font-weight:bold;'>Denoised trace</span> :", unsafe_allow_html=True) 
@@ -563,8 +563,40 @@ with st.container(height=800):
 
 # 4EME ENCADRÉ (CLUSTERING)
     
-with st.container(height=300):
-    st.markdown("**Results from clustering :**")
+with st.container(height=1700):
+    st.markdown("**Clustering :**")
+    
+    clustering_files = [
+    "../GUI_20230103_090203.mseed",
+    "../GUI_20230127_090749.mseed",
+    "../GUI_20230310_090649.mseed",
+    "../GUI_20240112_095041.mseed",
+    "../RES_20230103_090203.mseed",
+    "../RES_20230127_090749.mseed",
+    ]
+
+    figs = []
+    for file in clustering_files:
+        data = lecture_mseed(file)
+        trace = data[0]["data_samples"]
+        fs = data[0]["sample_rate_hz"]
+        start_str = data[0]["start_time"]
+        start_dt = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
+        time = [start_dt + timedelta(seconds=i/fs) for i in range(len(trace))]
+        
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=time, y=trace, mode='lines'))
+        figs.append(fig)
+
+    # Affichage en 2 colonnes de 3
+    col1, col2 = st.columns(2)
+    for i, fig in enumerate(figs):
+        if i % 2 == 0:
+            col1.plotly_chart(fig, use_container_width=True)
+        else:
+            col2.plotly_chart(fig, use_container_width=True)
+
+
     for type in data_types:
         if type in detection_times.keys():
             if len(detection_times[type]) == 0: # si pas de détection
