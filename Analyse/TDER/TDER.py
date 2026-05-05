@@ -1,8 +1,8 @@
 import numpy as np
 from random import randint
 import matplotlib.pyplot as plt
-from lecture_mseed import *
 import glob
+from Lecture_data.lecture_mseed import *
 import time
 
 def DER(signal, sw, lw, fs):
@@ -66,13 +66,14 @@ def TDER(signal, sw, lw, fs):
         else:
             tder.append(0)
 
+    tder = np.concatenate(([tder[0]], tder, [tder[-1]])) # pour avoir le meme nombre de points
     return tder
 
 def detection_DER(der, seuil):
     detect = []
     for t in range(len(der)):
         if der[t] >= seuil:
-            if not (detect != [] and t-detect[-1] <= 100):
+            if not (detect != [] and t-detect[-1] <= 10):
                 detect.append(t)
     return detect
 
@@ -83,7 +84,7 @@ def detection_TDER(tder, seuil):
     detect = []
     for t in range(len(tder)):
         if tder[t] >= seuil:
-            if not (detect != [] and t-detect[-1] <= 100):
+            if not (detect != [] and t-detect[-1] <= 10):
                 detect.append(t)
     return detect
 
