@@ -60,6 +60,16 @@ def matrice_distance_globale(matrices) :
     for i in range(len(matrices[0])) :
         for j in range(len(matrices[0])) :
             m_d[i, j] = np.mean([matrices[k][i][j] for k in range(len(matrices))])
+    
+    # Normalisation :
+    indices = np.triu_indices(len(m_d), k=1)  # k=1 exclut la diagonale
+    m_d_coupee = m_d[indices]
+    d_min = np.min(m_d_coupee)
+    d_max = np.max(m_d_coupee)
+    m_d = (m_d - d_min) / (d_max - d_min)
+
+    # On remet la diagonale à zéro, car la normalisation donnerait des valeurs négatives à cet endroit sinon
+    np.fill_diagonal(m_d, 0)
 
     return m_d
 
@@ -79,6 +89,16 @@ def matrice_distance_globale_autres(series, f_distance) :
         for j in range(len(series)):
             if i != j:
                 m_d[i, j] = f_distance(series[i], series[j])
+    
+    # Normalisation :
+    indices = np.triu_indices(len(m_d), k=1)  # k=1 exclut la diagonale
+    m_d_coupee = m_d[indices]
+    d_min = np.min(m_d_coupee)
+    d_max = np.max(m_d_coupee)
+    m_d = (m_d - d_min) / (d_max - d_min)
+
+    # On remet la diagonale à zéro, car la normalisation donnerait des valeurs négatives à cet endroit sinon
+    np.fill_diagonal(m_d, 0)
 
     return m_d
 
@@ -103,7 +123,7 @@ def matrice_similarite(m_distance) :
             if (i == j) :
                 m_s[i, j] = 1
             else :
-                m_s[i,j] = np.exp(-m_distance[i, j] / sigma)
+                m_s[i,j] = 1 - m_distance[i, j]
     
     return m_s
 
