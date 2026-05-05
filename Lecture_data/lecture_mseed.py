@@ -52,14 +52,14 @@ def affichage_simple_traces(trace_data):
 
 
                 # Affichage avec matplotlib
-                t= np.arange(len(trace_brute)) / fs
+                t= arange(len(data)) / fs
                 y = trace["data_samples"]
                 plt.plot(t,y)
                 plt.show()
 
 
 if __name__ == "__main__":
-    input_file = "event_CREF.mseed"
+    input_file = "GUI_20230310_090649.mseed"
     trace_data = lecture_mseed(input_file)
     affichage_simple_traces(trace_data)
             

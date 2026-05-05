@@ -1,6 +1,6 @@
 ### Imports :
 import numpy as np
-from networkx import *
+import networkx as nx
 import sys 
 import os
 # Pour trouver un fichier qui n'est pas sous le dossier actuel
@@ -84,7 +84,7 @@ def matrice_distance_globale_autres(series, f_distance) :
 
 
 ### Calcul de la matrice de similarité :
-def matrice_similarite(m_distance, sigma) :
+def matrice_similarite(m_distance) :
     """
     Calcul de la matrice de similarité à partir de la matrice de distance globale
     Entrées : 
@@ -93,6 +93,11 @@ def matrice_similarite(m_distance, sigma) :
         m_s : array de array numpy (matrice)
     """       
     m_s = np.zeros((len(m_distance), len(m_distance)))
+
+    ### Pour trouver sigma, on fait la moyenne de toutes les distances
+    indices = np.triu_indices(len(m_distance), k=1)  # k=1 exclut la diagonale
+    sigma = np.mean(m_distance[indices])
+
     for i in range(len(m_distance)) :
         for j in range(len(m_distance)) :
             if (i == j) :
@@ -113,7 +118,7 @@ def transfo_graphe(m_similarite) :
     Sortie :
         G : graphe networkx
     """
-    G = Graph()
+    G = nx.Graph()
 
     # Ajout des sommets :
     for i in range(len(m_similarite)) :
