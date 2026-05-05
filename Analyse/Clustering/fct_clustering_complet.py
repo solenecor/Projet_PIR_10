@@ -133,6 +133,33 @@ def clustering_distance_L2(l_series) :
 
     return G, m_similarite 
 
+def affiche_graphe(G):
+    """
+    Affiche le graphe pondéré G avec le poids des arrêtes arrondi au centième.
+    Entrées : 
+        G : graphe pondéré networkx
+    Sorties: 
+        None
+    """
+    plt.figure()
+    pos = nx.spring_layout(G, weight='weight')
+    nx.draw_networkx(G, pos, with_labels=True)
+    edge_labels = {k: round(v, 3) for k, v in nx.get_edge_attributes(G, 'weight').items()}
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+    plt.show()
+
+def egalise_longueur_serie(dict_data) : 
+    """
+    Resample les séries du dictionnaire dict_data pour que toutes les séries aient le même nombres de points
+    """
+    minimum = min(dict_data["longueurs"])
+    for i in range(len(dict_data["series"])) :
+        if len(dict_data["series"][i]) > minimum :
+            dict_data["series"][i] = resample(dict_data["series"][i], minimum)
+            dict_data["longueurs"][i] = len(dict_data["series"][i])
+            # print("Série", i, "modifiée, nouvelle longueur : ", dict_data["longueurs"][i])
+    print("Resample des séries fini")
+
 def lecture_initiale() :
     data1_1 = lecture_mseed("GUI_20230103_090203.mseed")
     data1_2 = lecture_mseed("RES_20230103_090203.mseed")
@@ -170,15 +197,7 @@ def lecture_initiale() :
         print("Série", i, "ajoutée, longueur : ", len(serie_lisse))
     
     ### On met toutes les séries à la même longueur 
-    minimum = min(dict_data["longueurs"])
-    for i in range(len(dict_data["series"])) :
-        if len(dict_data["series"][i]) > minimum :
-            dict_data["series"][i] = resample(dict_data["series"][i], minimum)
-            dict_data["longueurs"][i] = len(dict_data["series"][i])
-            # print("Série", i, "modifiée, nouvelle longueur : ", dict_data["longueurs"][i])
-    print("Resample des séries fini")
-
-
+    egalise_longueur_serie(dict_data)
 
     return dict_data["series"]
 
