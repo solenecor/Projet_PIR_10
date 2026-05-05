@@ -7,12 +7,13 @@ def convert_dat_to_mseed(output_filename='donnees_capteur.mseed', sampling_rate=
     # 1. Gestion des chemins
     script_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(script_dir)
-    full_output_path = os.path.join(parent_dir, output_filename)
+    full_in_path = os.path.join(parent_dir, 'gourde_capteur1')
+    full_output_path = os.path.join(parent_dir, 'gourde_capteur1', output_filename)
     
-    files = sorted(glob.glob(os.path.join(parent_dir, "geophone_*.dat")))
+    files = sorted(glob.glob(os.path.join(full_in_path, "geophone_*.dat")))
     
     if not files:
-        print(f"ERREUR : Aucun fichier trouvé dans {parent_dir}")
+        print(f"ERREUR : Aucun fichier trouvé dans {full_in_path}")
         return
 
     # 2. Chargement des données brutes
@@ -51,6 +52,7 @@ def convert_dat_to_mseed(output_filename='donnees_capteur.mseed', sampling_rate=
     
     print(f"--- CONVERSION RÉUSSIE ---")
     print(f"Fichier : {full_output_path}")
+    print(len(files))
     print(f"Nombre de points : {len(signal_final)}")
 
 if __name__ == "__main__":
