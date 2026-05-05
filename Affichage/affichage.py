@@ -275,7 +275,7 @@ with st.container(height=490):
     )
 
 
-    y1_max = max(data["Raw trace"]) if 'Raw trace' in selected else max(data['Denoised trace'])
+    y1_max = np.max(np.abs(data["Raw trace"]))* 1.2 if 'Raw trace' in selected else np.max(np.abs(data['Denoised trace']))*1.2 # *1.2 = petite marge   
     y2_max = 30
     fig.update_yaxes(range=[-y1_max, y1_max], secondary_y=False)
     fig.update_yaxes(range=[-y2_max, y2_max], secondary_y=True, dtick=y2_max)
@@ -463,7 +463,7 @@ with st.container(height=490):
 
                 
 
-    if 'Denoised trace' in selected or 'Raw trace' in selected:
+    if st.session_state.trace_choice in selected:
         arrowsize = 30
         time_numeric = [t.timestamp() for t in time] # temps de la trace en format numérique pour numpy
         for method, list_events in detection_times.items():
@@ -500,10 +500,10 @@ with st.container(height=490):
 
 
 # 3EME ENCADRÉ (PARAMETRES)
-with st.container(height=900):
+with st.container(height=1100):
     st.markdown("**Parameters :**")
 
-    start_time, end_time = st.slider("Select the part of the trace to analyse :",
+    start_time, end_time = st.slider("**Select the part of the trace to analyse :**",
         min_value=time_full[0],
         max_value=time_full[-1],
         value=(time_full[0], time_full[-1]),
@@ -512,7 +512,7 @@ with st.container(height=900):
         key='time_window'
     )
 
-    st.markdown(f"<span style='color:{colors['Denoised trace']}; font-weight:bold;'>Denoised trace</span> :", unsafe_allow_html=True) 
+    st.markdown(f"<span style='color:{colors['Denoised trace']}; font-weight:bold;'>Denoised trace :</span>", unsafe_allow_html=True) 
     method = st.radio("Method :", ('EPPF', 'EPS'), key='denoising_method', horizontal=True, label_visibility="collapsed")
     with st.expander("Show parameters"):
         if method == 'EPPF':
@@ -524,13 +524,13 @@ with st.container(height=900):
         else:
             st.number_input('Window size :', value=5, key='window_eps')
 
-    st.radio("Trace analysed :", ('Denoised trace', 'Raw trace'), horizontal=True, key='trace_choice')
+    st.radio("**Trace analysed :**", ('Denoised trace', 'Raw trace'), horizontal=True, key='trace_choice')
     
     st.number_input('Wait time for new detection (s):', value=10, key='wait_time')
 
     for type in data_types:
         if type in detection_times.keys():
-            st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> :", unsafe_allow_html=True) 
+            st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type} :</span>", unsafe_allow_html=True) 
             with st.expander("Show parameters"):
                 if type == "STA/LTA":
                     col1, col2, col3 = st.columns(3)
