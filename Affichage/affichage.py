@@ -563,7 +563,7 @@ with st.container(height=900):
 
 # 4EME ENCADRÉ (CLUSTERING)
     
-with st.container(height=1700):
+with st.container(height=2200):
     st.markdown("**Clustering :**")
     
     clustering_files = [
