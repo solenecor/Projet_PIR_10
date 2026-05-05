@@ -88,8 +88,11 @@ start_str = data_trace[0]["start_time"]
 
 if 'wait_time' not in st.session_state:
     st.session_state.wait_time = 10
-if 'analysed_trace' not in st.session_state:
-    st.session_state.analysed_trace = denoised_trace
+if 'trace_choice' not in st.session_state:
+    st.session_state.trace_choice = 'Denoised trace'
+
+analysed_trace = denoised_trace if st.session_state.trace_choice == 'Denoised trace' else raw_trace
+
 
 
 
@@ -110,7 +113,7 @@ if'sta_lta_threshold' not in st.session_state:
 
 ns = int(st.session_state.sta_duration_s * sample_rate)
 nl = int(st.session_state.lta_duration_s * sample_rate)
-sta_lta_detection_indexes, sta_lta_ratio = detection_STA_LTA(st.session_state.analysed_trace, ns, nl, st.session_state.sta_lta_threshold, sample_rate, st.session_state.wait_time)
+sta_lta_detection_indexes, sta_lta_ratio = detection_STA_LTA(analysed_trace, ns, nl, st.session_state.sta_lta_threshold, sample_rate, st.session_state.wait_time)
 
 
     # MULTI-WINDOW
@@ -129,7 +132,7 @@ if 'p' not in st.session_state:
 if 'average_snr' not in st.session_state:
     st.session_state.average_snr = 3
 
-multi_window_detection_indexes, r2, r3, h1, h2, h3 = detection_multi_window(st.session_state.analysed_trace, st.session_state.m, st.session_state.n, st.session_state.q, st.session_state.d, st.session_state.p, st.session_state.alpha, st.session_state.average_snr, sample_rate, st.session_state.wait_time)
+multi_window_detection_indexes, r2, r3, h1, h2, h3 = detection_multi_window(analysed_trace, st.session_state.m, st.session_state.n, st.session_state.q, st.session_state.d, st.session_state.p, st.session_state.alpha, st.session_state.average_snr, sample_rate, st.session_state.wait_time)
 
 
     # MER
@@ -138,25 +141,18 @@ if 'window_mer_ms' not in st.session_state:
 if 'threshold_mer_coeff' not in st.session_state:
     st.session_state.threshold_mer_coeff = 0.67
 
-mer_ratio = MER(st.session_state.analysed_trace, st.session_state.window_mer_ms, sample_rate)
+mer_ratio = MER(analysed_trace, st.session_state.window_mer_ms, sample_rate)
 mer_threshold = np.max(mer_ratio) * st.session_state.threshold_mer_coeff
 mer_detection_indexes = detection_MER(mer_ratio, mer_threshold, st.session_state.wait_time)
 
 
 
     # IMER
-if 'n1_ms' not in st.session_state:
-    st.session_state.n1_ms = 10
-if 'n2_ms' not in st.session_state:
-    st.session_state.n2_ms = 30
-if 'n3_ms' not in st.session_state:
-    st.session_state.n3_ms = 30
-if 'n_avg' not in st.session_state:
-    st.session_state.n_avg = 10
 if 'snr_bas' not in st.session_state:
     st.session_state.snr_bas = False
 
-imer_curve, imer_threshold, imer_detection_indexes = compute_imer(st.session_state.analysed_trace, sample_rate, st.session_state.snr_bas, st.session_state.wait_time)
+imer_curve, imer_threshold, imer_detection_indexes = compute_imer(analysed_trace, sample_rate, st.session_state.snr_bas, st.session_state.wait_time)
+st.write(f"IMER picks: {imer_detection_indexes}, threshold: {imer_threshold:.6f}")
 
 
     # TDER
@@ -165,10 +161,9 @@ if 'sw' not in st.session_state:
 if 'lw' not in st.session_state:
     st.session_state.lw = 0.3
 
-tder_ratio = TDER(st.session_state.analysed_trace, st.session_state.sw, st.session_state.lw, sample_rate)
+tder_ratio = TDER(analysed_trace, st.session_state.sw, st.session_state.lw, sample_rate)
 
-if 'tder_threshold' not in st.session_state:
-    st.session_state.tder_threshold = seuil_tder = np.mean(tder_ratio) + 2*np.std(tder_ratio)
+st.session_state.tder_threshold = seuil_tder = np.mean(tder_ratio) + 2*np.std(tder_ratio)
 
 tder_detection_indexes = detection_TDER(tder_ratio, st.session_state.tder_threshold, st.session_state.wait_time)
 
@@ -458,7 +453,7 @@ with st.container(height=490):
             else:
                 for i, x_event in enumerate(list_events):
                     x_event_numeric = x_event.timestamp() # x_event est un datetime, on le convertit en nombre pour le calcul
-                    y_point = np.interp(x_event_numeric, time_numeric, data["Denoised trace"])
+                    y_point = np.interp(x_event_numeric, time_numeric, analysed_trace)
                     fig.add_annotation(
                         x=x_event,
                         y=y_point,
@@ -500,13 +495,7 @@ with st.container(height=800):
         else:
             st.number_input('Window size :', value=5, key='window_eps')
 
-    analysed_trace = st.radio("Trace analysed :", ('Denoised trace', 'Raw trace'), horizontal=True)
-    if analysed_trace == 'Denoised trace':
-        st.session_state.analysed_trace = denoised_trace
-
-    else:
-        st.session_state.analysed_trace = raw_trace
-
+    st.radio("Trace analysed :", ('Denoised trace', 'Raw trace'), horizontal=True, key='trace_choice')
 
 
     
@@ -547,16 +536,8 @@ with st.container(height=800):
                         st.number_input('Threshold coefficient value :', value=0.67, key='threshold_mer_coeff')
 
                 if type == "IMER":
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.number_input('n1 length (ms):', value=10, key='n1_ms')
-                        st.number_input('Nomber of points (Smoothing) :', value=10, key='n_avg')
-                    with col2:
-                        st.number_input('n2 length (ms):', value=30, key='n2_ms')
-                        st.radio("Low SNR :", ('True', 'False'), key='snr_bas', horizontal=True)
-                    with col3:
-                        st.number_input('n3 length (ms):', value=30, key='n3_ms')
-
+                    st.radio("Low SNR :", (True, False), key='snr_bas', horizontal=True)
+                    
                 if type == "TDER":
                     col1, col2 = st.columns(2)
                     with col1:
