@@ -567,13 +567,15 @@ with st.container(height=1700):
     st.markdown("**Clustering :**")
     
     clustering_files = [
-    "../GUI_20230103_090203.mseed",
-    "../GUI_20230127_090749.mseed",
-    "../GUI_20230310_090649.mseed",
-    "../GUI_20240112_095041.mseed",
-    "../RES_20230103_090203.mseed",
-    "../RES_20230127_090749.mseed",
-    ]
+        "../GUI_20230127_090749.mseed",
+        "../RES_20230127_090749.mseed",
+        "../GUI_20230103_090203.mseed",
+        "../RES_20230103_090203.mseed",
+        "../GUI_20230310_090649.mseed",
+        "../RES_20230310_090649.mseed",
+        "../GUI_20240112_095041.mseed",
+        "../RES_20240112_095041.mseed",
+        ]
 
     figs = []
     for file in clustering_files:
@@ -586,7 +588,10 @@ with st.container(height=1700):
         
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=time, y=trace, mode='lines'))
-        fig.update_layout(title=os.path.basename(file))
+        if "GUI" in file:
+            fig.update_layout(title=os.path.basename(file)+ " - capteur 1")
+        else:
+            fig.update_layout(title=os.path.basename(file)+ " - capteur 2")
         figs.append(fig)
 
     # Affichage en 2 colonnes de 3
