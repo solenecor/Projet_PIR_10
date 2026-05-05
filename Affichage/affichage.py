@@ -108,12 +108,20 @@ analysed_trace = denoised_trace if st.session_state.trace_choice == 'Denoised tr
 
 
 
+
     # AXE DES X 
 
 # on convertit la date en datetime
 start_dt = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
-time = [start_dt + timedelta(seconds=i/sample_rate) for i in range(len(denoised_trace))]
+time_full = [start_dt + timedelta(seconds=i/sample_rate) for i in range(len(denoised_trace))]
 
+if 'time_window' not in st.session_state:
+    st.session_state.time_window = (time_full[0], time_full[-1])
+
+start_idx = int((st.session_state.time_window[0] - time_full[0]).total_seconds() * sample_rate)
+end_idx = int((st.session_state.time_window[1] - time_full[0]).total_seconds() * sample_rate)
+analysed_trace = analysed_trace[start_idx:end_idx]
+time = time_full[start_idx:end_idx]
 
     # STA/LTA
 if 'sta_duration_s' not in st.session_state:
@@ -180,7 +188,7 @@ tder_detection_indexes = detection_TDER(tder_ratio, st.session_state.tder_thresh
 
 
     # REGROUPEMENT
-data = {"Raw trace" : raw_trace, "Denoised trace" : denoised_trace, "STA/LTA" : sta_lta_ratio , "R2" : r2, "R3" : r3, "MER" : mer_ratio , "IMER" : imer_curve, "TDER" : tder_ratio}
+data = {"Raw trace" : raw_trace[start_idx:end_idx], "Denoised trace" : denoised_trace[start_idx:end_idx], "STA/LTA" : sta_lta_ratio , "R2" : r2, "R3" : r3, "MER" : mer_ratio , "IMER" : imer_curve, "TDER" : tder_ratio}
 detection_times = {"STA/LTA" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in sta_lta_detection_indexes], "Multi-window" :[start_dt + timedelta(seconds=idx / sample_rate) for idx in multi_window_detection_indexes], "MER" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in mer_detection_indexes], "IMER" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in imer_detection_indexes], "TDER" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in tder_detection_indexes]}
 clustering_results = {"STA/LTA" : "Earthquake", "Multi-window" : "Quake", "MER" : "Earthquake", "IMER" : "Rainfall", "TDER" : 'Quake'}
 
@@ -226,10 +234,10 @@ df['time'] = time
 df['H1'] = h1
 df['H2'] = h2
 df['H3'] = h3
-df['sta_lta_threshold'] = [st.session_state.sta_lta_threshold]*len(denoised_trace)
-df['imer_threshold'] = [imer_threshold]*len(denoised_trace)
-df['mer_threshold'] = [mer_threshold]*len(denoised_trace)
-df['tder_threshold'] = [st.session_state.tder_threshold]*len(denoised_trace)
+df['sta_lta_threshold'] = [st.session_state.sta_lta_threshold]*len(denoised_trace[start_idx:end_idx])
+df['imer_threshold'] = [imer_threshold]*len(denoised_trace[start_idx:end_idx])
+df['mer_threshold'] = [mer_threshold]*len(denoised_trace[start_idx:end_idx])
+df['tder_threshold'] = [st.session_state.tder_threshold]*len(denoised_trace[start_idx:end_idx])
 
 
 # couleurs
@@ -490,9 +498,19 @@ with st.container(height=490):
 
 
 
+
 # 3EME ENCADRÉ (PARAMETRES)
 with st.container(height=900):
     st.markdown("**Parameters :**")
+
+    start_time, end_time = st.slider("Select the part of the trace to analyse :",
+        min_value=time_full[0],
+        max_value=time_full[-1],
+        value=(time_full[0], time_full[-1]),
+        step=timedelta(seconds=10),
+        format="HH:mm:ss",
+        key='time_window'
+    )
 
     st.markdown(f"<span style='color:{colors['Denoised trace']}; font-weight:bold;'>Denoised trace</span> :", unsafe_allow_html=True) 
     method = st.radio("Method :", ('EPPF', 'EPS'), key='denoising_method', horizontal=True, label_visibility="collapsed")
