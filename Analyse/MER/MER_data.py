@@ -1,7 +1,7 @@
 import numpy as np
 from random import randint
 import matplotlib.pyplot as plt
-from lecture_mseed import lecture_mseed
+from Lecture_data.lecture_mseed import *
 import glob
 import time
 

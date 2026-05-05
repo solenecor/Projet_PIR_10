@@ -152,7 +152,7 @@ if 'n_avg' not in st.session_state:
 if 'snr_bas' not in st.session_state:
     st.session_state.snr_bas = False
 
-imer_curve, imer_threshold, imer_detection_indexes = compute_imer(denoised_trace, sample_rate, st.session_state.snr_bas)
+imer_curve, imer_threshold, imer_detection_indexes = compute_imer(denoised_trace, sample_rate, st.session_state.snr_bas, st.session_state.wait_time)
 
 
     # TDER

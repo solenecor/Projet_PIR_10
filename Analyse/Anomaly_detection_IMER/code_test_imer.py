@@ -13,7 +13,7 @@ import numpy as np
 ###trouver un evenment plus ponctuel
 ### ajouter temps d'execution et cout énérgetique 
 
-def compute_imer(signal, fs,snr_bas=False):
+def compute_imer(signal, fs,snr_bas=False, wait_time=10):
     """
     Code IMER
     
@@ -90,7 +90,9 @@ def compute_imer(signal, fs,snr_bas=False):
     # ETAPE 5 /  Seuillage et pointé
     debut = n2 + n3
     zone_active = imer_curve[debut:]
-    cooldown= n2 + n3  # Période de non-détection après un pointé
+
+    n_wait = int(wait_time * fs)
+    
     n_persist = max(1, int(persistance_ms * fs / 1000))  # Nombre d'échantillons consécutifs au-dessus du seuil pour valider un pointé
 
 
@@ -111,7 +113,7 @@ def compute_imer(signal, fs,snr_bas=False):
             if np.all(above[i:i+n_persist] ):
                 pick_abs=int(i + debut)
                 picks.append(pick_abs)
-                i +=cooldown
+                i += n_wait
             else:  
                 i += 1
 
