@@ -586,6 +586,7 @@ with st.container(height=1700):
         
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=time, y=trace, mode='lines'))
+        fig.update_layout(title=os.path.basename(file))
         figs.append(fig)
 
     # Affichage en 2 colonnes de 3
