@@ -25,7 +25,7 @@ def STA_LTA(trace, i, ns, nl, threshold):
     return is_detected, i, ratio
 
     
-def detection_STA_LTA(trace, ns, nl, threshold, sample_rate):
+def detection_STA_LTA(trace, ns, nl, threshold, sample_rate, wait_time):
     i = 0
     ratio = [-10] * len(trace)
     detection_indexes = []
@@ -36,7 +36,7 @@ def detection_STA_LTA(trace, ns, nl, threshold, sample_rate):
 
         if is_detected:
             # quand on détecte un dépassement du seuil
-            if len(detection_indexes) == 0 or detection_index > detection_indexes[-1] + sample_rate * 10: # on attend 10s pour qu'il ne s'agisse pas du même évènement (ou alors s'il y a pas déjà d'autre détection)
+            if len(detection_indexes) == 0 or detection_index > detection_indexes[-1] + sample_rate * wait_time: # on attend 10s pour qu'il ne s'agisse pas du même évènement (ou alors s'il y a pas déjà d'autre détection)
                 detection_indexes.append(detection_index)
         
         i += 1 

@@ -77,14 +77,14 @@ def detection_DER(der, seuil):
                 detect.append(t)
     return detect
 
-def detection_TDER(tder, seuil):
+def detection_TDER(tder, seuil, wait_time):
     """
     Détecte uniquement la première perturbation dans le signal
     """
     detect = []
     for t in range(len(tder)):
         if tder[t] >= seuil:
-            if not (detect != [] and t-detect[-1] <= 10):
+            if not (detect != [] and t-detect[-1] <= wait_time):
                 detect.append(t)
     return detect
 

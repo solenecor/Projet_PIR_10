@@ -68,7 +68,7 @@ def multi_window(trace, t, m, n, q, d, p, alpha, env, h2, h3):
     return is_detected, t, r2, r3, h1
 
 
-def detection_multi_window(trace, m, n, q, d, p, alpha, average_snr, sample_rate):
+def detection_multi_window(trace, m, n, q, d, p, alpha, average_snr, sample_rate, wait_time):
 
     env = np.abs(hilbert(trace))
 
@@ -88,7 +88,7 @@ def detection_multi_window(trace, m, n, q, d, p, alpha, average_snr, sample_rate
         
         if is_detected:
             # quand on détecte un dépassement du seuil
-            if len(detection_indexes) == 0 or detection_index > detection_indexes[-1] + sample_rate * 10: # on attend 10s pour qu'il ne s'agisse pas du même évènement (ou alors s'il y a pas déjà d'autre détection)
+            if len(detection_indexes) == 0 or detection_index > detection_indexes[-1] + sample_rate * wait_time: # on attend 10s pour qu'il ne s'agisse pas du même évènement (ou alors s'il y a pas déjà d'autre détection)
                 detection_indexes.append(detection_index)
         
         i += 1 
