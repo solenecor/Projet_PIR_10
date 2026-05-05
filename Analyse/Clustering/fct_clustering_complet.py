@@ -158,7 +158,7 @@ def egalise_longueur_serie(dict_data) :
             dict_data["series"][i] = resample(dict_data["series"][i], minimum)
             dict_data["longueurs"][i] = len(dict_data["series"][i])
             # print("Série", i, "modifiée, nouvelle longueur : ", dict_data["longueurs"][i])
-    print("Resample des séries fini")
+    #print("Resample des séries fini")
 
 def lecture_initiale() :
     data1_1 = lecture_mseed("GUI_20230103_090203.mseed")
