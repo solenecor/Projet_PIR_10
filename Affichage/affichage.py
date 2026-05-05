@@ -63,7 +63,7 @@ st.title("Detection of the first arrival on a seismic trace")
 # DONNEES
 
     # TRACE
-trace_file = "../donnees_capteur.mseed"
+trace_file = "../GUI_20230103_090203.mseed"
 
 data_trace = lecture_mseed(trace_file)
 raw_trace = data_trace[0]["data_samples"]
@@ -85,6 +85,9 @@ sample_rate = data_trace[0]["sample_rate_hz"]
 
 start_str = data_trace[0]["start_time"]
 
+if 'wait_time' not in st.session_state:
+    st.session_state.wait_time = 10
+
 
     # AXE DES X 
 
@@ -103,7 +106,7 @@ if'sta_lta_threshold' not in st.session_state:
 
 ns = int(st.session_state.sta_duration_s * sample_rate)
 nl = int(st.session_state.lta_duration_s * sample_rate)
-sta_lta_detection_indexes, sta_lta_ratio = detection_STA_LTA(denoised_trace, ns, nl, st.session_state.sta_lta_threshold, sample_rate)
+sta_lta_detection_indexes, sta_lta_ratio = detection_STA_LTA(denoised_trace, ns, nl, st.session_state.sta_lta_threshold, sample_rate, st.session_state.wait_time)
 
 
     # MULTI-WINDOW
@@ -122,7 +125,7 @@ if 'p' not in st.session_state:
 if 'average_snr' not in st.session_state:
     st.session_state.average_snr = 3
 
-multi_window_detection_indexes, r2, r3, h1, h2, h3 = detection_multi_window(denoised_trace, st.session_state.m, st.session_state.n, st.session_state.q, st.session_state.d, st.session_state.p, st.session_state.alpha, st.session_state.average_snr, sample_rate)
+multi_window_detection_indexes, r2, r3, h1, h2, h3 = detection_multi_window(denoised_trace, st.session_state.m, st.session_state.n, st.session_state.q, st.session_state.d, st.session_state.p, st.session_state.alpha, st.session_state.average_snr, sample_rate, st.session_state.wait_time)
 
 
     # MER
@@ -133,7 +136,7 @@ if 'threshold_mer_coeff' not in st.session_state:
 
 mer_ratio = MER(denoised_trace, st.session_state.window_mer_ms, sample_rate)
 mer_threshold = np.max(mer_ratio) * st.session_state.threshold_mer_coeff
-mer_detection_indexes = detection_MER(mer_ratio, mer_threshold)
+mer_detection_indexes = detection_MER(mer_ratio, mer_threshold, st.session_state.wait_time)
 
 
 
@@ -163,7 +166,7 @@ tder_ratio = TDER(denoised_trace, st.session_state.sw, st.session_state.lw, samp
 if 'tder_threshold' not in st.session_state:
     st.session_state.tder_threshold = seuil_tder = np.mean(tder_ratio) + 2*np.std(tder_ratio)
 
-tder_detection_indexes = detection_TDER(tder_ratio, st.session_state.tder_threshold)
+tder_detection_indexes = detection_TDER(tder_ratio, st.session_state.tder_threshold, st.session_state.wait_time)
 
 
     # REGROUPEMENT
@@ -492,6 +495,8 @@ with st.container(height=800):
                 st.number_input('Degree :', value=2, key='degree_eppf')
         else:
             st.number_input('Window size :', value=5, key='window_eps')
+
+    st.number_input('Wait time for new detection (s):', value=10, key='wait_time')
 
     for type in data_types:
         if type in detection_times.keys():

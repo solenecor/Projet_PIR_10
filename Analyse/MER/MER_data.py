@@ -41,11 +41,11 @@ def first_detection_MER(mer, seuil):
         t+=1
     return t
 
-def detection_MER(mer, seuil):
+def detection_MER(mer, seuil, wait_time):
     detect = []
     for t in range(len(mer)):
         if mer[t] >= seuil:
-            if not (detect != [] and t-detect[-1] <= 10):
+            if not (detect != [] and t-detect[-1] <= wait_time):
                 detect.append(t)
     return detect
 
