@@ -213,26 +213,26 @@ if __name__ == "__main__" :
     plt.figure(1)
     pos = nx.spring_layout(G_visibility, weight='weight')
     nx.draw_networkx(G_visibility, pos, with_labels=True)
-    edge_labels = nx.get_edge_attributes(G_visibility, 'weight')
+    edge_labels = {k: round(v, 2) for k, v in nx.get_edge_attributes(G_visibility, 'weight').items()}
     nx.draw_networkx_edge_labels(G_visibility, pos, edge_labels=edge_labels)
 
 
     plt.figure(2)
     pos = nx.spring_layout(G_L1, weight='weight')
     nx.draw_networkx(G_L1, pos, with_labels=True)
-    edge_labels = nx.get_edge_attributes(G_L1, 'weight')
+    edge_labels = {k: round(v, 2) for k, v in nx.get_edge_attributes(G_L1, 'weight').items()}
     nx.draw_networkx_edge_labels(G_L1, pos, edge_labels=edge_labels)
 
     plt.figure(3)
     pos = nx.spring_layout(G_L2, weight='weight')
     nx.draw_networkx(G_L2, pos, with_labels=True)
-    edge_labels = nx.get_edge_attributes(G_L2, 'weight')
+    edge_labels = {k: round(v, 2) for k, v in nx.get_edge_attributes(G_L2, 'weight').items()}
     nx.draw_networkx_edge_labels(G_L2, pos, edge_labels=edge_labels)
 
     plt.figure(4)
     pos = nx.spring_layout(G_dtw, weight='weight')
     nx.draw_networkx(G_dtw, pos, with_labels=True)
-    edge_labels = nx.get_edge_attributes(G_dtw, 'weight')
+    edge_labels = {k: round(v, 2) for k, v in nx.get_edge_attributes(G_dtw, 'weight').items()}
     nx.draw_networkx_edge_labels(G_dtw, pos, edge_labels=edge_labels)
 
     plt.show()
