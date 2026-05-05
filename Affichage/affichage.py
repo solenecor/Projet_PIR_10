@@ -5,6 +5,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import matplotlib.pyplot as plt
+import networkx as nx
 import sys
 import os
 # Pour trouver un fichier qui n'est pas sous le dossier actuel
@@ -17,8 +19,16 @@ from Analyse.Smoothing.eps import eps
 from Analyse.MER.MER_data import MER, detection_MER
 from Analyse.Anomaly_detection_IMER.code_test_imer import compute_imer
 from Analyse.TDER.TDER import TDER, detection_TDER
+<<<<<<< HEAD
 from Analyse.Smoothing.wavelet import wavelet_transform
 from Analyse.MCM.mcm import compute_mcm
+=======
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Analyse', 'Clustering')))
+from Analyse.Clustering.fct_clustering_complet import clustering_distance_dtw, clustering_distance_L1, clustering_distance_L2, clustering_visibility_graph, egalise_longueur_serie, affiche_graphe
+
+
+>>>>>>> eb47fcf (Ajout de l'affichage du graphe obtenu par calcul de distance/similarité, et suppression de print inutile)
 
 
 
@@ -625,6 +635,20 @@ with st.container(height=1300):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # 4EME ENCADRÉ (CLUSTERING)
     
 with st.container(height=2200):
@@ -641,11 +665,19 @@ with st.container(height=2200):
         "../RES_20240112_095041.mseed",
         ]
 
+    dict_data_clustering = { "series" : [], "fs" : [], "longueurs" : []}
+
     figs = []
     for file in clustering_files:
         data = lecture_mseed(file)
         trace = data[0]["data_samples"]
         fs = data[0]["sample_rate_hz"]
+
+        ### Complétion du dictionnaire pour plus tard :
+        dict_data_clustering["series"].append(trace)
+        dict_data_clustering["fs"].append(fs)
+        dict_data_clustering['longueurs'].append(len(trace))
+
         start_str = data[0]["start_time"]
         start_dt = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
         time = [start_dt + timedelta(seconds=i/fs) for i in range(len(trace))]
@@ -665,6 +697,19 @@ with st.container(height=2200):
             col1.plotly_chart(fig, use_container_width=True)
         else:
             col2.plotly_chart(fig, use_container_width=True)
+
+    ### Calcul de similarité pour les 8 fichiers :
+    egalise_longueur_serie(dict_data_clustering)
+    l_series = dict_data_clustering["series"]
+    G_visibility, m_visibility = clustering_visibility_graph(l_series, nb_seg=30)
+
+    ### Affichage du graphe 
+    fig, ax = plt.subplots(figsize=(12, 6))
+    pos = nx.spring_layout(G_visibility, weight='weight')
+    nx.draw_networkx(G_visibility, pos, with_labels=True, ax = ax)
+    edge_labels = {k: round(v, 3) for k, v in nx.get_edge_attributes(G_visibility, 'weight').items()}
+    nx.draw_networkx_edge_labels(G_visibility, pos, edge_labels=edge_labels)
+    st.pyplot(fig)
 
 
     for type in data_types:
