@@ -1,7 +1,9 @@
 import numpy as np
 from random import randint
 import matplotlib.pyplot as plt
-from Lecture_data.lecture_mseed import lecture_mseed
+from lecture_mseed import lecture_mseed
+import glob
+import time
 
 def MER(signal, wl, fs):
     '''
@@ -51,15 +53,32 @@ def detection_MER(mer, seuil, wait_time):
 
 
 if __name__ == "__main__":
+    """
     ### Signal data
     trace = lecture_mseed("event.mseed")[0]['data_samples']
     fs = lecture_mseed("event.mseed")[0]['sample_rate_hz']
+    """
+
+    data_folder = "trace_capteur"
+    fs = 100  # sampling rate (Hz)
+
+    # Concatenate data from all file in the data folder
+    all_data = []
+    for fpath in sorted(glob.glob(data_folder + "/geophone_*.dat")):
+        data = np.fromfile(fpath, dtype=np.int16)
+        all_data.append(data)
+    trace = np.array(np.concatenate(all_data), dtype=np.float64)
 
     wl_ms = 10  # window length
 
     ### Test
+    deb = time.time()
     Mer = MER(trace, wl_ms, fs)
-    print(detection_MER(Mer, np.max(Mer)*2/3))
+    fin_cal = time.time()
+    det = detection_MER(Mer, np.max(Mer)*2/3)
+    fin_det = time.time()
+    print(det)
+    print(f"Temps calcul : {fin_cal-deb}    Temps détection : {fin_det-deb}")
 
     ### Affichage
     plt.figure()
