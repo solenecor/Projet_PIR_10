@@ -63,7 +63,7 @@ st.title("Detection of the first arrival on a seismic trace")
 # DONNEES
 
     # TRACE
-trace_file = "../GUI_20230103_090203.mseed"
+trace_file = "../donnees_capteur1.mseed"
 
 data_trace = lecture_mseed(trace_file)
 raw_trace = data_trace[0]["data_samples"]
@@ -189,7 +189,7 @@ tder_detection_indexes = detection_TDER(tder_ratio, st.session_state.tder_thresh
 
     # REGROUPEMENT
 data = {"Raw trace" : raw_trace[start_idx:end_idx], "Denoised trace" : denoised_trace[start_idx:end_idx], "STA/LTA" : sta_lta_ratio , "R2" : r2, "R3" : r3, "MER" : mer_ratio , "IMER" : imer_curve, "TDER" : tder_ratio}
-detection_times = {"STA/LTA" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in sta_lta_detection_indexes], "Multi-window" :[start_dt + timedelta(seconds=idx / sample_rate) for idx in multi_window_detection_indexes], "MER" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in mer_detection_indexes], "IMER" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in imer_detection_indexes], "TDER" : [start_dt + timedelta(seconds=idx / sample_rate) for idx in tder_detection_indexes]}
+detection_times = {"STA/LTA" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in sta_lta_detection_indexes], "Multi-window" :[time[0] + timedelta(seconds=idx / sample_rate) for idx in multi_window_detection_indexes], "MER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in mer_detection_indexes], "IMER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in imer_detection_indexes], "TDER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in tder_detection_indexes]}
 clustering_results = {"STA/LTA" : "Earthquake", "Multi-window" : "Quake", "MER" : "Earthquake", "IMER" : "Rainfall", "TDER" : 'Quake'}
 
     # DIFFERENTES DONNEES AFFICHABLES
@@ -507,7 +507,7 @@ with st.container(height=900):
         min_value=time_full[0],
         max_value=time_full[-1],
         value=(time_full[0], time_full[-1]),
-        step=timedelta(seconds=10),
+        step=timedelta(seconds=5),
         format="HH:mm:ss",
         key='time_window'
     )
