@@ -3,12 +3,12 @@ import numpy as np
 from obspy import Trace, Stream, UTCDateTime
 import os
 
-def convert_dat_to_mseed(output_filename='donnees_capteur.mseed', sampling_rate=100.0):
+def convert_dat_to_mseed(input_folder='gourde_capteur1' ,output_filename='donnees_capteur1.mseed', sampling_rate=100.0):
     # 1. Gestion des chemins
     script_dir = os.path.dirname(os.path.abspath(__file__))
     parent_dir = os.path.dirname(script_dir)
-    full_in_path = os.path.join(parent_dir, 'gourde_capteur1')
-    full_output_path = os.path.join(parent_dir, 'gourde_capteur1', output_filename)
+    full_in_path = os.path.join(parent_dir, input_folder)
+    full_output_path = os.path.join(parent_dir, output_filename)
     
     files = sorted(glob.glob(os.path.join(full_in_path, "geophone_*.dat")))
     
@@ -40,7 +40,7 @@ def convert_dat_to_mseed(output_filename='donnees_capteur.mseed', sampling_rate=
         'location': '',
         'channel': 'GPZ',
         'sampling_rate': sampling_rate,
-        'starttime': UTCDateTime()  # Tu peux mettre UTCDateTime("2023-01-01") si tu as la date
+        'starttime': UTCDateTime("2026-05-05T10:00:00")  # date à mettre sous forme YYYY-MM-DDTHH:MM:SS
     }
     
     tr = Trace(data=signal_final, header=stats)

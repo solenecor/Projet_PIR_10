@@ -65,9 +65,9 @@ st.title("Detection of the first arrival on a seismic trace")
 
     # TRACE
 trace_file = "../donnees_capteur1.mseed"
-
 data_trace = lecture_mseed(trace_file)
 raw_trace = data_trace[0]["data_samples"]
+
 if 'denoising_method' not in st.session_state:
     st.session_state.denoising_method = 'EPS'
 if 'window_eppf' not in st.session_state:
@@ -111,7 +111,6 @@ if st.session_state.trace_choice != st.session_state.previous_trace_choice:
     st.session_state.previous_trace_choice = st.session_state.trace_choice
 
 analysed_trace = denoised_trace if st.session_state.trace_choice == 'Denoised trace' else raw_trace
-
 
 
 
@@ -196,12 +195,12 @@ tder_detection_indexes = detection_TDER(tder_ratio, st.session_state.tder_thresh
 #MCM
 if 'k' not in st.session_state:
     st.session_state.k = 5
-mcm_er_raw, mcm_er_filtered, mcm_derivative, mcm_picks, mcm_threshold = compute_mcm(analysed_trace, sample_rate, st.session_state.k, st.session_state.wait_time)
+mcm_er_raw, mcm_er_filtered, mcm_derivative, mcm_detection_indexes, mcm_threshold = compute_mcm(analysed_trace, sample_rate, st.session_state.k, st.session_state.wait_time)
 
 
     # REGROUPEMENT
 data = {"Raw trace" : raw_trace[start_idx:end_idx], "Denoised trace" : denoised_trace[start_idx:end_idx], "STA/LTA" : sta_lta_ratio , "R2" : r2, "R3" : r3, "MER" : mer_ratio , "IMER" : imer_curve, "TDER" : tder_ratio, "MCM" : mcm_er_raw}
-detection_times = {"STA/LTA" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in sta_lta_detection_indexes], "Multi-window" :[time[0] + timedelta(seconds=idx / sample_rate) for idx in multi_window_detection_indexes], "MER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in mer_detection_indexes], "IMER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in imer_detection_indexes], "TDER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in tder_detection_indexes], "MCM" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in mcm_picks]}
+detection_times = {"STA/LTA" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in sta_lta_detection_indexes], "Multi-window" :[time[0] + timedelta(seconds=idx / sample_rate) for idx in multi_window_detection_indexes], "MER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in mer_detection_indexes], "IMER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in imer_detection_indexes], "TDER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in tder_detection_indexes], "MCM" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in mcm_detection_indexes]}
 clustering_results = {"STA/LTA" : "Earthquake", "Multi-window" : "Quake", "MER" : "Earthquake", "IMER" : "Rainfall", "TDER" : 'Quake', "MCM" : "Earthquake"}
 
     # DIFFERENTES DONNEES AFFICHABLES
