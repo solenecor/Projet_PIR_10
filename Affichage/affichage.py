@@ -17,7 +17,7 @@ from Analyse.Smoothing.eps import eps
 from Analyse.MER.MER_data import MER, detection_MER
 from Analyse.Anomaly_detection_IMER.code_test_imer import compute_imer
 from Analyse.TDER.TDER import TDER, detection_TDER
-
+from Analyse.MCM.mcm import compute_mcm
 
 
 
@@ -186,14 +186,19 @@ st.session_state.tder_threshold = seuil_tder = np.mean(tder_ratio) + 2*np.std(td
 
 tder_detection_indexes = detection_TDER(tder_ratio, st.session_state.tder_threshold, st.session_state.wait_time)
 
+#MCM
+if 'k' not in st.session_state:
+    st.session_state.k = 5
+mcm_er_raw, mcm_er_filtered, mcm_derivative, mcm_picks, mcm_threshold = compute_mcm(analysed_trace, sample_rate, st.session_state.k, st.session_state.wait_time)
+
 
     # REGROUPEMENT
-data = {"Raw trace" : raw_trace[start_idx:end_idx], "Denoised trace" : denoised_trace[start_idx:end_idx], "STA/LTA" : sta_lta_ratio , "R2" : r2, "R3" : r3, "MER" : mer_ratio , "IMER" : imer_curve, "TDER" : tder_ratio}
-detection_times = {"STA/LTA" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in sta_lta_detection_indexes], "Multi-window" :[time[0] + timedelta(seconds=idx / sample_rate) for idx in multi_window_detection_indexes], "MER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in mer_detection_indexes], "IMER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in imer_detection_indexes], "TDER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in tder_detection_indexes]}
-clustering_results = {"STA/LTA" : "Earthquake", "Multi-window" : "Quake", "MER" : "Earthquake", "IMER" : "Rainfall", "TDER" : 'Quake'}
+data = {"Raw trace" : raw_trace[start_idx:end_idx], "Denoised trace" : denoised_trace[start_idx:end_idx], "STA/LTA" : sta_lta_ratio , "R2" : r2, "R3" : r3, "MER" : mer_ratio , "IMER" : imer_curve, "TDER" : tder_ratio, "MCM" : mcm_er_raw}
+detection_times = {"STA/LTA" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in sta_lta_detection_indexes], "Multi-window" :[time[0] + timedelta(seconds=idx / sample_rate) for idx in multi_window_detection_indexes], "MER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in mer_detection_indexes], "IMER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in imer_detection_indexes], "TDER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in tder_detection_indexes], "MCM" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in mcm_picks]}
+clustering_results = {"STA/LTA" : "Earthquake", "Multi-window" : "Quake", "MER" : "Earthquake", "IMER" : "Rainfall", "TDER" : 'Quake', "MCM" : "Earthquake"}
 
     # DIFFERENTES DONNEES AFFICHABLES
-data_types = ["Raw trace", "Denoised trace", "STA/LTA", "Multi-window", "MER", "IMER", 'TDER']
+data_types = ["Raw trace", "Denoised trace", "STA/LTA", "Multi-window", "MER", "IMER", 'TDER', 'MCM']
 selected = []
 
 
@@ -238,7 +243,7 @@ df['sta_lta_threshold'] = [st.session_state.sta_lta_threshold]*len(denoised_trac
 df['imer_threshold'] = [imer_threshold]*len(denoised_trace[start_idx:end_idx])
 df['mer_threshold'] = [mer_threshold]*len(denoised_trace[start_idx:end_idx])
 df['tder_threshold'] = [st.session_state.tder_threshold]*len(denoised_trace[start_idx:end_idx])
-
+df['mcm_threshold'] = [mcm_threshold]*len(denoised_trace[start_idx:end_idx])
 
 # couleurs
 colors = {}
@@ -437,6 +442,31 @@ with st.container(height=490):
                     ), secondary_y=True
                     )
 
+                elif type == 'MCM':
+
+                    fig.add_trace(go.Scatter(
+                        x=df["time"], 
+                        y=df[type], 
+                        name=f"{type}",
+                        legendgroup=type,
+                        showlegend=True,
+                        line=dict(dash='dash', color=colors[type]),
+                        mode='lines'
+                    ), secondary_y=True
+                    )
+
+                    fig.add_trace(go.Scatter(
+                        x=df["time"], 
+                        y=df['mcm_threshold'], 
+                        name=f"{type} threshold",
+                        legendgroup=type,
+                        showlegend=True,
+                        line=dict(dash='solid', color=colors[type]),
+                        mode='lines'
+                    ), secondary_y=True
+                    )
+
+
                 
                 else:
                     fig.add_trace(go.Scatter(
@@ -571,7 +601,10 @@ with st.container(height=1100):
                         st.number_input('Short window length (s) :', value=0.05, key='sw')
                     with col2:
                         st.number_input('Long window length (s) :', value=0.3, key='lw')
-                    
+                
+                if type == "MCM":
+                    st.number_input('Threshold multiplier value :', value=5, key='k')
+                   
     
                     
 
