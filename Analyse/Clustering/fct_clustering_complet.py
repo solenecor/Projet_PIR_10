@@ -105,10 +105,11 @@ def lecture_initiale() :
 
     return dict_data["series"]
 
-def clustering_visibility_graph(l_series, nb_seg = 30) :
+def clustering_visibility_graph(k, l_series, nb_seg = 30) :
     """
     Effectue le clustering sur les séries temporelles en utilisant les graphes de visibilité pondérés
     Entrées :
+        k : entier
         l_series : array d'array numpy, chaque array correspond à une série temporelle
         nb_seg : entier, nombre de segments à découper pour chaque série
     Sorties :
@@ -159,7 +160,7 @@ def clustering_visibility_graph(l_series, nb_seg = 30) :
     m_similarite = matrice_similarite(m_distance_globale)
 
     # Passage par k-NN :
-    m_s_knn = knn_graph(m_similarite, 2)
+    m_s_knn = knn_graph(m_similarite, k)
 
     # Transfo en graphe : 
     G = transfo_graphe(m_s_knn)

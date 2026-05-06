@@ -3,32 +3,33 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 from fct_clustering_complet import *
 
 if __name__ == "__main__" :
+    k = 5
 
     series = lecture_initiale()
 
     start_time = time()
-    G_visibility, m_visibility = clustering_visibility_graph(series, nb_seg=30)
+    G_visibility, m_visibility = clustering_visibility_graph(k, series, nb_seg=30)
     print("Graphe du clustering 1 construit")
     end_time = time()
     print(f"Temps de construction du graphe 1 : {end_time - start_time:.2f} secondes")
    
     start_time = time()
-    G_L1, m_L1 = clustering_distance_L1(series, 2)
+    G_L1, m_L1 = clustering_distance_L1(series, k)
     print("Graphe du clustering 2 construit")
     end_time = time()
     print(f"Temps de construction du graphe 2 : {end_time - start_time:.2f} secondes")
 
     start_time = time()
-    G_L2, m_L2 = clustering_distance_L2(series, 2)
+    G_L2, m_L2 = clustering_distance_L2(series, k)
     print("Graphe du clustering 3 construit")
     end_time = time()
     print(f"Temps de construction du graphe 3 : {end_time - start_time:.2f} secondes")
     
-    """start_time = time()
-    G_dtw, m_dtw = clustering_distance_dtw(series, 2)
+    start_time = time()
+    G_dtw, m_dtw = clustering_distance_dtw(series, k)
     print("Graphe du clustering 4 construit")
     end_time = time()
-    print(f"Temps de construction du graphe 4 : {end_time - start_time:.2f} secondes")"""
+    print(f"Temps de construction du graphe 4 : {end_time - start_time:.2f} secondes")
 
     plt.figure(1)
     pos = nx.spring_layout(G_visibility, weight='weight')
@@ -50,11 +51,11 @@ if __name__ == "__main__" :
     nx.draw_networkx_edge_labels(G_L2, pos, edge_labels=edge_labels)
 
 
-    """plt.figure(4)
+    plt.figure(4)
     pos = nx.spring_layout(G_dtw, weight='weight')
     nx.draw_networkx(G_dtw, pos, with_labels=True)
     edge_labels = {k: round(v, 3) for k, v in nx.get_edge_attributes(G_dtw, 'weight').items()}
-    nx.draw_networkx_edge_labels(G_dtw, pos, edge_labels=edge_labels)"""
+    nx.draw_networkx_edge_labels(G_dtw, pos, edge_labels=edge_labels)
 
     plt.show()
 
