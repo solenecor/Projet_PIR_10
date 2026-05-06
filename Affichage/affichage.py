@@ -100,7 +100,7 @@ sample_rate = data_trace[0]["sample_rate_hz"]
 start_str = data_trace[0]["start_time"]
 
 if 'wait_time' not in st.session_state:
-    st.session_state.wait_time = 10
+    st.session_state.wait_time = 5
 if 'trace_choice' not in st.session_state:
     st.session_state.trace_choice = 'Denoised trace'
 
@@ -552,6 +552,9 @@ with st.container(height=490):
 with st.container(height=1300):
     st.markdown("**Parameters :**")
 
+    st.radio("**Trace analysed :**", ('Denoised trace', 'Raw trace'), horizontal=True, key='trace_choice')
+
+
     start_time, end_time = st.slider("**Part of the trace to analyse :**",
         min_value=time_full[0],
         max_value=time_full[-1],
@@ -561,9 +564,8 @@ with st.container(height=1300):
         key='time_window'
     )
 
-    st.radio("**Trace analysed :**", ('Denoised trace', 'Raw trace'), horizontal=True, key='trace_choice')
     
-    st.number_input('**Wait time until next detection (s):**', value=10, key='wait_time')
+    st.number_input('**Wait time until next detection (s):**', value=5, key='wait_time')
 
     st.markdown(f"<span style='color:{colors['Denoised trace']}; font-weight:bold;'>Denoised trace :</span>", unsafe_allow_html=True) 
     method = st.radio("Method :", ('EPS', 'EPPF', 'Wavelet transform'), key='denoising_method', horizontal=True, label_visibility="collapsed")
