@@ -22,7 +22,8 @@ from Analyse.TDER.TDER import TDER, detection_TDER
 from Analyse.Smoothing.wavelet import wavelet_transform
 from Analyse.MCM.mcm import compute_mcm
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Analyse', 'Clustering')))
-from Analyse.Clustering.fct_clustering_complet import clustering_distance_dtw, clustering_distance_L1, clustering_distance_L2, clustering_visibility_graph, egalise_longueur_serie, affiche_graphe, normaliseur 
+from Analyse.Clustering.fct_clustering_complet import clustering_distance_dtw, clustering_distance_L1, clustering_distance_L2, clustering_visibility_graph
+from Analyse.Clustering.fct_clustering_complet import egalise_longueur_serie, normaliseur, choix_clustering
 
 
 
@@ -711,8 +712,9 @@ with st.container(height=2200):
 
 
     # Affichage du graphe :
+    fct_distance = choix_clustering(st.session_state.distance_method)
     k = 3
-    G, _ = clustering_visibility_graph(k, dict_series["series"], nb_seg=30)
+    G, _ = fct_distance(k, dict_series["series"])
     # On récupère les arrêtes de poids non nul : 
     G.edges(data=True)
     aretes_filtrees = [(u, v) for u, v, d in G.edges(data=True) if d["weight"] != 0]

@@ -11,6 +11,19 @@ from Smoothing.eps import eps
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from Lecture_data.lecture_mseed import *
 
+def choix_clustering(choix) :
+    """
+    Renvoie la fonction correspondante au choix
+    Entrées :
+        choix : string
+    Sorties :
+        fct : fonction
+    """
+    possibilites = ("Weighted visibility graph", "Norme L1", "Norme L2", "Dynamic Time Warping")
+    fonctions = (clustering_visibility_graph, clustering_distance_dtw, clustering_distance_L1, clustering_distance_L2)
+
+    fct = fonctions[possibilites.index(choix)]
+    return fct
 
 def affiche_graphe(G):
     """
@@ -171,7 +184,7 @@ def clustering_visibility_graph(k, l_series, nb_seg = 30) :
 
     return G, m_s_knn
 
-def clustering_distance_dtw(l_series, k) :
+def clustering_distance_dtw(k, l_series) :
     """
     Effectue le clustering sur les séries temporelles en utilisant la distance DTW
     Entrées :
@@ -194,7 +207,7 @@ def clustering_distance_dtw(l_series, k) :
 
     return G, m_s_knn
 
-def clustering_distance_L1(l_series, k) :
+def clustering_distance_L1(k, l_series) :
     """
     Effectue le clustering sur les séries temporelles en utilisant la norme L1
     Entrées :
@@ -217,7 +230,7 @@ def clustering_distance_L1(l_series, k) :
 
     return G, m_s_knn
 
-def clustering_distance_L2(l_series, k) :
+def clustering_distance_L2(k, l_series) :
     """
     Effectue le clustering sur les séries temporelles en utilisant la norme L2
     Entrées :
