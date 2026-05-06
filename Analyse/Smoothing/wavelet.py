@@ -31,5 +31,3 @@ def wavelet_transform(signal, wavelet_type, decomposition_level):
     denoised_signal = pywt.waverec(coeffs_denoised, wavelet=wavelet_type)
 
     return denoised_signal
-
-print(pywt.wavelist(kind='discrete'))
