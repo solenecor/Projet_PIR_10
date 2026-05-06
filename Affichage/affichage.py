@@ -121,6 +121,8 @@ analysed_trace = denoised_trace if st.session_state.trace_choice == 'Denoised tr
 # pour la partie clustering :
 if "distance_method" not in st.session_state :
     st.session_state.distance_method = "Weighted visibility graph"
+if "k_nn" not in st.session_state :
+    st.session_state.k_nn = 3
 
 
 
@@ -709,10 +711,12 @@ with st.container(height=2200):
     distances = ("Weighted visibility graph", "Norme L1", "Norme L2", "Dynamic Time Warping")
     st.radio("Méthode de calcul de distance:", distances, key='distance_method', horizontal=True)
 
+    # Choix du nombre de voisins à garder sur le graphe :
+    st.number_input('Nombre de voisins à garder sur le graphe :', value=3, key='k_nn', min_value=1, max_value=7)
 
     # Affichage du graphe :
     fct_distance = choix_clustering(st.session_state.distance_method)
-    k = 3
+    k = st.session_state.k_nn
     G, _ = fct_distance(k, dict_series["series"])
     # On récupère les arrêtes de poids non nul : 
     G.edges(data=True)
