@@ -1,5 +1,4 @@
 from ts2vg import NaturalVG
-import pylab as P
 from time import time
 import sys 
 import os
