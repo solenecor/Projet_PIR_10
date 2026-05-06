@@ -5,7 +5,7 @@ import sys
 import os
 # Pour trouver un fichier qui n'est pas sous le dossier actuel
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from Clustering.calculs_distance import *
+from calculs_distance import *
 
 ### Fonctions de calculs matriciels pour l'algo avec les weighted visibility graphs : 
 def decoupe_segments(serie, n_segments) :
@@ -102,6 +102,28 @@ def matrice_distance_globale_autres(series, f_distance) :
 
     return m_d
 
+### Fonction pour une méthode de grpahe k-NN (chaque sommet garde ses k voisins les plus proches)
+def knn_graph(m_s, k):
+    """
+    Tranforme la matrice de similarite m_s avec la méthode k-nn
+    Entrées : 
+        m_s : matrice numpy, array de array de float
+        k : entier
+    Sortie :
+        m_knn : matrice numpy, array de array de float
+    """
+    n = m_s.shape[0]
+    m_knn = np.zeros_like(m_s)
+
+    for i in range(n):
+        # On trie la ligne de i par ordre décroissant, et on garde que les k premiers voisins
+        idx = np.argsort(m_s[i])[::-1][1:k+1]
+        m_knn[i, idx] = m_s[i, idx]
+
+    # symétrisation (important pour graphe non orienté)
+    m_knn = np.maximum(m_knn, m_knn.T)
+
+    return m_knn
 
 ### Calcul de la matrice de similarité :
 def matrice_similarite(m_distance) :

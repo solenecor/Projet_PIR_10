@@ -5,6 +5,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import matplotlib.pyplot as plt
+import networkx as nx
 import sys
 import os
 # Pour trouver un fichier qui n'est pas sous le dossier actuel
@@ -19,6 +21,10 @@ from Analyse.Anomaly_detection_IMER.code_test_imer import compute_imer
 from Analyse.TDER.TDER import TDER, detection_TDER
 from Analyse.Smoothing.wavelet import wavelet_transform
 from Analyse.MCM.mcm import compute_mcm
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Analyse', 'Clustering')))
+from Analyse.Clustering.fct_clustering_complet import clustering_distance_dtw, clustering_distance_L1, clustering_distance_L2, clustering_visibility_graph, egalise_longueur_serie, affiche_graphe
+
+
 
 
 
@@ -614,12 +620,23 @@ with st.container(height=1300):
                         st.number_input('Short window length (s) :', value=0.05, key='sw')
                     with col2:
                         st.number_input('Long window length (s) :', value=0.3, key='lw')
-                
-                if type == "MCM":
-                    st.number_input('Threshold multiplier value :', value=5, key='k')
-                   
+                    
     
                     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -641,14 +658,14 @@ with st.container(height=1300):
 #         "../RES_20240112_095041.mseed",
 #         ]
 
-#     figs = []
-#     for file in clustering_files:
-#         data = lecture_mseed(file)
-#         trace = data[0]["data_samples"]
-#         fs = data[0]["sample_rate_hz"]
-#         start_str = data[0]["start_time"]
-#         start_dt = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
-#         time = [start_dt + timedelta(seconds=i/fs) for i in range(len(trace))]
+    figs = []
+    for file in clustering_files:
+        data = lecture_mseed(file)
+        trace = data[0]["data_samples"]
+        fs = data[0]["sample_rate_hz"]
+        start_str = data[0]["start_time"]
+        start_dt = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
+        time = [start_dt + timedelta(seconds=i/fs) for i in range(len(trace))]
         
 #         fig = go.Figure()
 #         fig.add_trace(go.Scatter(x=time, y=trace, mode='lines'))
@@ -667,10 +684,10 @@ with st.container(height=1300):
 #             col2.plotly_chart(fig, use_container_width=True)
 
 
-#     for type in data_types:
-#         if type in detection_times.keys():
-#             if len(detection_times[type]) == 0: # si pas de détection
-#                 st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : No detection", unsafe_allow_html=True)
+    for type in data_types:
+        if type in detection_times.keys():
+            if len(detection_times[type]) == 0: # si pas de détection
+                st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : No detection", unsafe_allow_html=True)
 
 #             else:
 #                 st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : {clustering_results[type]}", unsafe_allow_html=True)

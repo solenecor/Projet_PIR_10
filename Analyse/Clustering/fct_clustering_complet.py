@@ -1,5 +1,4 @@
 from ts2vg import NaturalVG
-import pylab as P
 from time import time
 import sys 
 import os
@@ -13,6 +12,73 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')
 from Lecture_data.lecture_mseed import *
 
 
+def affiche_graphe(G):
+    """
+    Affiche le graphe pondéré G avec le poids des arrêtes arrondi au centième.
+    Entrées : 
+        G : graphe pondéré networkx
+    Sorties: 
+        None
+    """
+    plt.figure()
+    pos = nx.spring_layout(G, weight='weight')
+    nx.draw_networkx(G, pos, with_labels=True)
+    edge_labels = {k: round(v, 3) for k, v in nx.get_edge_attributes(G, 'weight').items()}
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+    plt.show()
+
+def egalise_longueur_serie(dict_data) : 
+    """
+    Resample les séries du dictionnaire dict_data pour que toutes les séries aient le même nombres de points
+    """
+    minimum = min(dict_data["longueurs"])
+    for i in range(len(dict_data["series"])) :
+        if len(dict_data["series"][i]) > minimum :
+            dict_data["series"][i] = resample(dict_data["series"][i], minimum)
+            dict_data["longueurs"][i] = len(dict_data["series"][i])
+            # print("Série", i, "modifiée, nouvelle longueur : ", dict_data["longueurs"][i])
+    #print("Resample des séries fini")
+
+def lecture_initiale() :
+    data1_1 = lecture_mseed("GUI_20230103_090203.mseed")
+    data1_2 = lecture_mseed("RES_20230103_090203.mseed")
+    data2_1 = lecture_mseed("GUI_20230127_090749.mseed")
+    data2_2 = lecture_mseed("RES_20230127_090749.mseed")
+    data3_1 = lecture_mseed("GUI_20230310_090649.mseed")
+    data3_2 = lecture_mseed("RES_20230310_090649.mseed")
+
+    """ 
+    tag manuel :
+    - GUI_20230103_090203 : début de l'event à (32,574; -21)
+    - RES_20230103_090203 : début de l'event à (32,61; 209)
+    - GUI_20230127_090749 : (34,06 ; -8)
+    - RES_20230127_090749 : (34,36 ; 0)
+    - GUI_20230310_090649 : (33,60 ; -28)
+    - RES_20230310_090649 : (33,75 ; -2)
+    On prend 10 points avant la détection de l'événement
+    """
+
+    l_data = [data1_1, data1_2, data2_1, data2_2, data3_1, data3_2]
+    dict_data = { "liste_data" : l_data, "tags" : [32.574, 32.61, 34.06, 34.36, 33.60, 33.75], "series" : [], "sr" : [], "longueurs" : []}
+
+    ### Ajout de toutes les séries temporelles dans la liste
+    for i in range(len(l_data)) : 
+        dict_data["sr"].append(l_data[i][0]["sample_rate_hz"])
+        debut = int(dict_data["tags"][i] * dict_data["sr"][-1]) - 10
+        serie = np.array(l_data[i][0]["data_samples"])
+
+        # On prend 50 secondes de données à partir du début de l'événement
+        serie = serie[debut:debut + int(50 * dict_data["sr"][-1])]
+        serie_lisse = eps(serie, window_size=10)
+        dict_data["series"].append(serie_lisse)
+        dict_data["longueurs"].append(len(serie_lisse))
+
+        print("Série", i, "ajoutée, longueur : ", len(serie_lisse))
+    
+    ### On met toutes les séries à la même longueur 
+    egalise_longueur_serie(dict_data)
+
+    return dict_data["series"]
 
 def clustering_visibility_graph(l_series, nb_seg = 30) :
     """
@@ -63,17 +129,19 @@ def clustering_visibility_graph(l_series, nb_seg = 30) :
 
     # Calcul de la matrice de distance globale :
     m_distance_globale = matrice_distance_globale(matrices)
-
     
     # Calcul de la matrice de similarité : 
     m_similarite = matrice_similarite(m_distance_globale)
 
+    # Passage par k-NN :
+    m_s_knn = knn_graph(m_similarite, 2)
+
     # Transfo en graphe : 
-    G = transfo_graphe(m_similarite)
+    G = transfo_graphe(m_s_knn)
 
-    return G, m_similarite 
+    return G, m_s_knn
 
-def clustering_distance_dtw(l_series) :
+def clustering_distance_dtw(l_series, k) :
     """
     Effectue le clustering sur les séries temporelles en utilisant la distance DTW
     Entrées :
@@ -88,12 +156,15 @@ def clustering_distance_dtw(l_series) :
     # Calcul de la matrice de similarité : 
     m_similarite = matrice_similarite(m_distance_globale)
 
-    # # Transfo en graphe : 
-    G = transfo_graphe(m_similarite)
+    # Passage par k-NN :
+    m_s_knn = knn_graph(m_similarite, k)
 
-    return G, m_similarite 
+    # Transfo en graphe : 
+    G = transfo_graphe(m_s_knn)
 
-def clustering_distance_L1(l_series, ) :
+    return G, m_s_knn
+
+def clustering_distance_L1(l_series, k) :
     """
     Effectue le clustering sur les séries temporelles en utilisant la norme L1
     Entrées :
@@ -108,12 +179,15 @@ def clustering_distance_L1(l_series, ) :
     # Calcul de la matrice de similarité : 
     m_similarite = matrice_similarite(m_distance_globale)
 
-    # # Transfo en graphe : 
-    G = transfo_graphe(m_similarite)
+    # Passage par k-NN :
+    m_s_knn = knn_graph(m_similarite, k)
 
-    return G, m_similarite 
+    # Transfo en graphe : 
+    G = transfo_graphe(m_s_knn)
 
-def clustering_distance_L2(l_series) :
+    return G, m_s_knn
+
+def clustering_distance_L2(l_series, k) :
     """
     Effectue le clustering sur les séries temporelles en utilisant la norme L2
     Entrées :
@@ -128,59 +202,14 @@ def clustering_distance_L2(l_series) :
     # Calcul de la matrice de similarité : 
     m_similarite = matrice_similarite(m_distance_globale)
 
-    # # Transfo en graphe : 
-    G = transfo_graphe(m_similarite)
+    # Passage par k-NN :
+    m_s_knn = knn_graph(m_similarite, k)
 
-    return G, m_similarite 
+    # Transfo en graphe : 
+    G = transfo_graphe(m_s_knn)
 
-def lecture_initiale() :
-    data1_1 = lecture_mseed("GUI_20230103_090203.mseed")
-    data1_2 = lecture_mseed("RES_20230103_090203.mseed")
-    data2_1 = lecture_mseed("GUI_20230127_090749.mseed")
-    data2_2 = lecture_mseed("RES_20230127_090749.mseed")
-    data3_1 = lecture_mseed("GUI_20230310_090649.mseed")
-    data3_2 = lecture_mseed("RES_20230310_090649.mseed")
+    return G, m_s_knn
 
-    """ 
-    tag manuel :
-    - GUI_20230103_090203 : début de l'event à (32,574; -21)
-    - RES_20230103_090203 : début de l'event à (32,61; 209)
-    - GUI_20230127_090749 : (34,06 ; -8)
-    - RES_20230127_090749 : (34,36 ; 0)
-    - GUI_20230310_090649 : (33,60 ; -28)
-    - RES_20230310_090649 : (33,75 ; -2)
-    On prend 10 points avant la détection de l'événement
-    """
-
-    l_data = [data1_1, data1_2, data2_1, data2_2, data3_1, data3_2]
-    dict_data = { "liste_data" : l_data, "tags" : [32.574, 32.61, 34.06, 34.36, 33.60, 33.75], "series" : [], "sr" : [], "longueurs" : []}
-
-    ### Ajout de toutes les séries temporelles dans la liste
-    for i in range(len(l_data)) : 
-        dict_data["sr"].append(l_data[i][0]["sample_rate_hz"])
-        debut = int(dict_data["tags"][i] * dict_data["sr"][-1]) - 10
-        serie = np.array(l_data[i][0]["data_samples"])
-
-        # On prend 50 secondes de données à partir du début de l'événement
-        serie = serie[debut:debut + int(50 * dict_data["sr"][-1])]
-        serie_lisse = eps(serie, window_size=10)
-        dict_data["series"].append(serie_lisse)
-        dict_data["longueurs"].append(len(serie_lisse))
-
-        print("Série", i, "ajoutée, longueur : ", len(serie_lisse))
-    
-    ### On met toutes les séries à la même longueur 
-    minimum = min(dict_data["longueurs"])
-    for i in range(len(dict_data["series"])) :
-        if len(dict_data["series"][i]) > minimum :
-            dict_data["series"][i] = resample(dict_data["series"][i], minimum)
-            dict_data["longueurs"][i] = len(dict_data["series"][i])
-            # print("Série", i, "modifiée, nouvelle longueur : ", dict_data["longueurs"][i])
-    print("Resample des séries fini")
-
-
-
-    return dict_data["series"]
 
 if __name__ == "__main__" :
 
@@ -193,19 +222,19 @@ if __name__ == "__main__" :
     print(f"Temps de construction du graphe 1 : {end_time - start_time:.2f} secondes")
    
     start_time = time()
-    G_L1, m_L1 = clustering_distance_L1(series)
+    G_L1, m_L1 = clustering_distance_L1(series, 2)
     print("Graphe du clustering 2 construit")
     end_time = time()
     print(f"Temps de construction du graphe 2 : {end_time - start_time:.2f} secondes")
 
     start_time = time()
-    G_L2, m_L2 = clustering_distance_L2(series)
+    G_L2, m_L2 = clustering_distance_L2(series, 2)
     print("Graphe du clustering 3 construit")
     end_time = time()
     print(f"Temps de construction du graphe 3 : {end_time - start_time:.2f} secondes")
     
     start_time = time()
-    G_dtw, m_dtw = clustering_distance_dtw(series)
+    G_dtw, m_dtw = clustering_distance_dtw(series, 2)
     print("Graphe du clustering 4 construit")
     end_time = time()
     print(f"Temps de construction du graphe 4 : {end_time - start_time:.2f} secondes")
