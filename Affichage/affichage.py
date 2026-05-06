@@ -567,11 +567,11 @@ with st.container(height=1300):
         if method == 'EPPF':
             c1, c2 = st.columns(2)
             with c1:
-                st.number_input('Window size :', value=81, key='window_eppf')
+                st.number_input('Window size (samples):', value=81, key='window_eppf')
             with c2:
                 st.number_input('Degree :', value=2, key='degree_eppf')
         elif method == 'EPS':
-            st.number_input('Window size :', value=5, key='window_eps')
+            st.number_input('Window size (samples) :', value=5, key='window_eps')
         else:
             c1, c2 = st.columns(2)
             with c1:
