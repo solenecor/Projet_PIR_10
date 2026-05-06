@@ -29,6 +29,10 @@ from Analyse.Clustering.fct_clustering_complet import clustering_distance_dtw, c
 
 
 >>>>>>> eb47fcf (Ajout de l'affichage du graphe obtenu par calcul de distance/similarité, et suppression de print inutile)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Analyse', 'Clustering')))
+from Analyse.Clustering.fct_clustering_complet import clustering_distance_dtw, clustering_distance_L1, clustering_distance_L2, clustering_visibility_graph, egalise_longueur_serie, affiche_graphe
+
+
 
 
 
@@ -624,10 +628,7 @@ with st.container(height=1300):
                         st.number_input('Short window length (s) :', value=0.05, key='sw')
                     with col2:
                         st.number_input('Long window length (s) :', value=0.3, key='lw')
-                
-                if type == "MCM":
-                    st.number_input('Threshold multiplier value :', value=5, key='k')
-                   
+                    
     
                     
 
@@ -678,6 +679,7 @@ with st.container(height=2200):
         dict_data_clustering["fs"].append(fs)
         dict_data_clustering['longueurs'].append(len(trace))
 
+
         start_str = data[0]["start_time"]
         start_dt = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
         time = [start_dt + timedelta(seconds=i/fs) for i in range(len(trace))]
@@ -710,6 +712,7 @@ with st.container(height=2200):
     edge_labels = {k: round(v, 3) for k, v in nx.get_edge_attributes(G_visibility, 'weight').items()}
     nx.draw_networkx_edge_labels(G_visibility, pos, edge_labels=edge_labels)
     st.pyplot(fig)
+
 
 
     for type in data_types:
