@@ -14,12 +14,14 @@ def decoupe_data_gourde(input_file) :
     trace = lecture_mseed(input_file)
     fs = trace[0]["sample_rate_hz"]
     data = trace[0]["data_samples"]
-    debut = int(55*fs) 
-    fin = debut + int(30*fs)
+    debut_exp = int(55*fs) 
+    fin_exp = debut_exp + int(30*fs)
     for i in range(10) :
-        l_events.append(data[debut:fin:])
-        debut = fin 
-        fin = debut + int(30*fs)
+        debut_event = debut_exp + int(20*fs)
+        fin_event = debut_event + int(5*fs)
+        l_events.append(data[debut_event:fin_event:])
+        debut_exp = fin_exp 
+        fin_exp = debut_exp + int(30*fs)
     return l_events, fs
 
 if __name__ == "__main__":
