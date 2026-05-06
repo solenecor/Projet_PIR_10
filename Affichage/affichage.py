@@ -561,6 +561,10 @@ with st.container(height=1300):
         key='time_window'
     )
 
+    st.radio("**Trace analysed :**", ('Denoised trace', 'Raw trace'), horizontal=True, key='trace_choice')
+    
+    st.number_input('**Wait time for new detection (s):**', value=10, key='wait_time')
+
     st.markdown(f"<span style='color:{colors['Denoised trace']}; font-weight:bold;'>Denoised trace :</span>", unsafe_allow_html=True) 
     method = st.radio("Method :", ('EPS', 'EPPF', 'Wavelet transform'), key='denoising_method', horizontal=True, label_visibility="collapsed")
     with st.expander("Show parameters"):
@@ -580,9 +584,7 @@ with st.container(height=1300):
                 st.number_input('Number of decomposition levels :', value=5, key='decomposition_level')
 
 
-    st.radio("**Trace analysed :**", ('Denoised trace', 'Raw trace'), horizontal=True, key='trace_choice')
-    
-    st.number_input('Wait time for new detection (s):', value=10, key='wait_time')
+
 
     for type in data_types:
         if type in detection_times.keys():
