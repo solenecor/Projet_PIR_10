@@ -552,7 +552,7 @@ with st.container(height=490):
 with st.container(height=1300):
     st.markdown("**Parameters :**")
 
-    start_time, end_time = st.slider("**Select the part of the trace to analyse :**",
+    start_time, end_time = st.slider("**Part of the trace to analyse :**",
         min_value=time_full[0],
         max_value=time_full[-1],
         value=(time_full[0], time_full[-1]),
@@ -708,11 +708,11 @@ with st.container(height=2200):
             col2.plotly_chart(fig, use_container_width=True)
 
     # Choix de la méthode de calcul de distance :
-    distances = ("Weighted visibility graph", "Norme L1", "Norme L2", "Dynamic Time Warping")
-    st.radio("Méthode de calcul de distance:", distances, key='distance_method', horizontal=True)
+    distances = ("Weighted visibility graph", "Norm L1", "Norm L2", "Dynamic Time Warping")
+    st.radio("Distance calculation method:", distances, key='distance_method', horizontal=True)
 
     # Choix du nombre de voisins à garder sur le graphe :
-    st.number_input('Nombre de voisins à garder sur le graphe :', value=3, key='k_nn', min_value=1, max_value=7)
+    st.number_input('Number of neighbors to keep on the graph :', value=3, key='k_nn', min_value=1, max_value=7)
 
     # Affichage du graphe :
     fct_distance = choix_clustering(st.session_state.distance_method)
@@ -729,10 +729,10 @@ with st.container(height=2200):
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
     st.pyplot(fig)
 
-    for type in data_types:
-        if type in detection_times.keys():
-            if len(detection_times[type]) == 0: # si pas de détection
-                st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : No detection", unsafe_allow_html=True)
+    # for type in data_types:
+    #     if type in detection_times.keys():
+    #         if len(detection_times[type]) == 0: # si pas de détection
+    #             st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : No detection", unsafe_allow_html=True)
 
-            else:
-                st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : {clustering_results[type]}", unsafe_allow_html=True)
+    #         else:
+    #             st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : {clustering_results[type]}", unsafe_allow_html=True)
