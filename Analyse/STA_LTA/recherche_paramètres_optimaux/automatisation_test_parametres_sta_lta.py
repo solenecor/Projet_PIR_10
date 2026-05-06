@@ -1,12 +1,19 @@
 from datetime import datetime
+import sys
+import os
+# Pour trouver un fichier qui n'est pas sous le dossier actuel
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 from Lecture_data.lecture_mseed import lecture_mseed
 from excel_export_test_param_sta_lta import run_sta_lta_and_export
 from Analyse.Smoothing.wavelet import wavelet_transform
 from Analyse.Smoothing.eps import eps
+from Analyse.Smoothing.eppf import eppf
 
 # 1. Chargement des données
-trace_file = "donnees_capteur1.mseed"
-data_trace = lecture_mseed(trace_file)
+script_dir = os.path.dirname(os.path.abspath(__file__))
+full_in_path = os.path.join(script_dir, "..", "..", "..", "donnees_capteur1.mseed")
+data_trace = lecture_mseed(full_in_path)
+
 fs = data_trace[0]["sample_rate_hz"]
 start_dt = datetime.strptime(data_trace[0]["start_time"].rstrip("Z"), "%Y-%m-%dT%H:%M:%S")
 
@@ -24,7 +31,7 @@ lta_seconds = [1, 5, 10, 15, 20, 30]
 thresholds  = [2, 3, 4]
 wait_time   = 5
 
-denoised_trace = eps(raw_trace, 3)
+denoised_trace = eppf(raw_trace, 6, 2)
 
 print(f"Démarrage")
 

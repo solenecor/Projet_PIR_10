@@ -77,7 +77,7 @@ raw_trace = data_trace[0]["data_samples"]
 if 'denoising_method' not in st.session_state:
     st.session_state.denoising_method = 'EPS'
 if 'window_eppf' not in st.session_state:
-    st.session_state.window_eppf = 81
+    st.session_state.window_eppf = 10
 if 'degree_eppf' not in st.session_state:
     st.session_state.degree_eppf = 2
 if 'window_eps' not in st.session_state:
@@ -100,7 +100,7 @@ sample_rate = data_trace[0]["sample_rate_hz"]
 start_str = data_trace[0]["start_time"]
 
 if 'wait_time' not in st.session_state:
-    st.session_state.wait_time = 10
+    st.session_state.wait_time = 5
 if 'trace_choice' not in st.session_state:
     st.session_state.trace_choice = 'Denoised trace'
 
@@ -561,6 +561,9 @@ with st.container(height=490):
 with st.container(height=1300):
     st.markdown("**Parameters :**")
 
+    st.radio("**Trace analysed :**", ('Denoised trace', 'Raw trace'), horizontal=True, key='trace_choice')
+
+
     start_time, end_time = st.slider("**Part of the trace to analyse :**",
         min_value=time_full[0],
         max_value=time_full[-1],
@@ -570,13 +573,16 @@ with st.container(height=1300):
         key='time_window'
     )
 
+    
+    st.number_input('**Wait time until next detection (s):**', value=5, key='wait_time')
+
     st.markdown(f"<span style='color:{colors['Denoised trace']}; font-weight:bold;'>Denoised trace :</span>", unsafe_allow_html=True) 
     method = st.radio("Method :", ('EPS', 'EPPF', 'Wavelet transform'), key='denoising_method', horizontal=True, label_visibility="collapsed")
     with st.expander("Show parameters"):
         if method == 'EPPF':
             c1, c2 = st.columns(2)
             with c1:
-                st.number_input('Window size (samples):', value=81, key='window_eppf')
+                st.number_input('Window size (samples):', value=10, key='window_eppf')
             with c2:
                 st.number_input('Degree :', value=2, key='degree_eppf')
         elif method == 'EPS':
@@ -589,9 +595,7 @@ with st.container(height=1300):
                 st.number_input('Number of decomposition levels :', value=5, key='decomposition_level')
 
 
-    st.radio("**Trace analysed :**", ('Denoised trace', 'Raw trace'), horizontal=True, key='trace_choice')
-    
-    st.number_input('Wait time for new detection (s):', value=10, key='wait_time')
+
 
     for type in data_types:
         if type in detection_times.keys():
