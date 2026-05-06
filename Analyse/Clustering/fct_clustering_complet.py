@@ -142,7 +142,7 @@ def clustering_visibility_graph(l_series, nb_seg = 30) :
 
     return G, m_s_knn
 
-def clustering_distance_dtw(l_series) :
+def clustering_distance_dtw(l_series, k) :
     """
     Effectue le clustering sur les séries temporelles en utilisant la distance DTW
     Entrées :
@@ -158,14 +158,14 @@ def clustering_distance_dtw(l_series) :
     m_similarite = matrice_similarite(m_distance_globale)
 
     # Passage par k-NN :
-    m_s_knn = knn_graph(m_similarite, 2)
+    m_s_knn = knn_graph(m_similarite, k)
 
     # Transfo en graphe : 
     G = transfo_graphe(m_s_knn)
 
     return G, m_s_knn
 
-def clustering_distance_L1(l_series, ) :
+def clustering_distance_L1(l_series, k) :
     """
     Effectue le clustering sur les séries temporelles en utilisant la norme L1
     Entrées :
@@ -181,14 +181,14 @@ def clustering_distance_L1(l_series, ) :
     m_similarite = matrice_similarite(m_distance_globale)
 
     # Passage par k-NN :
-    m_s_knn = knn_graph(m_similarite, 2)
+    m_s_knn = knn_graph(m_similarite, k)
 
     # Transfo en graphe : 
     G = transfo_graphe(m_s_knn)
 
     return G, m_s_knn
 
-def clustering_distance_L2(l_series) :
+def clustering_distance_L2(l_series, k) :
     """
     Effectue le clustering sur les séries temporelles en utilisant la norme L2
     Entrées :
@@ -204,7 +204,7 @@ def clustering_distance_L2(l_series) :
     m_similarite = matrice_similarite(m_distance_globale)
 
     # Passage par k-NN :
-    m_s_knn = knn_graph(m_similarite, 2)
+    m_s_knn = knn_graph(m_similarite, k)
 
     # Transfo en graphe : 
     G = transfo_graphe(m_s_knn)
@@ -223,19 +223,19 @@ if __name__ == "__main__" :
     print(f"Temps de construction du graphe 1 : {end_time - start_time:.2f} secondes")
    
     start_time = time()
-    G_L1, m_L1 = clustering_distance_L1(series)
+    G_L1, m_L1 = clustering_distance_L1(series, 2)
     print("Graphe du clustering 2 construit")
     end_time = time()
     print(f"Temps de construction du graphe 2 : {end_time - start_time:.2f} secondes")
 
     start_time = time()
-    G_L2, m_L2 = clustering_distance_L2(series)
+    G_L2, m_L2 = clustering_distance_L2(series, 2)
     print("Graphe du clustering 3 construit")
     end_time = time()
     print(f"Temps de construction du graphe 3 : {end_time - start_time:.2f} secondes")
     
     start_time = time()
-    G_dtw, m_dtw = clustering_distance_dtw(series)
+    G_dtw, m_dtw = clustering_distance_dtw(series, 2)
     print("Graphe du clustering 4 construit")
     end_time = time()
     print(f"Temps de construction du graphe 4 : {end_time - start_time:.2f} secondes")
