@@ -131,7 +131,7 @@ time = time_full[start_idx:end_idx]
 
     # STA/LTA
 if 'sta_duration_s' not in st.session_state:
-    st.session_state.sta_duration_s = 1
+    st.session_state.sta_duration_s = 1.0
 if 'lta_duration_s' not in st.session_state:
     st.session_state.lta_duration_s = 10
 if'sta_lta_threshold' not in st.session_state:
@@ -578,7 +578,7 @@ with st.container(height=1300):
                 if type == "STA/LTA":
                     col1, col2, col3 = st.columns(3)
                     with col1:
-                        st.number_input('STA window length (s):', value=1, key='sta_duration_s')
+                        st.number_input('STA window length (s):', value=1.0, key='sta_duration_s')
                     with col2:
                         st.number_input('LTA window length (s):', value=10, key='lta_duration_s')
                     with col3:
@@ -625,52 +625,52 @@ with st.container(height=1300):
 
 
 
-# 4EME ENCADRÉ (CLUSTERING)
+# # 4EME ENCADRÉ (CLUSTERING)
     
-with st.container(height=2200):
-    st.markdown("**Clustering :**")
+# with st.container(height=2200):
+#     st.markdown("**Clustering :**")
     
-    clustering_files = [
-        "../GUI_20230127_090749.mseed",
-        "../RES_20230127_090749.mseed",
-        "../GUI_20230103_090203.mseed",
-        "../RES_20230103_090203.mseed",
-        "../GUI_20230310_090649.mseed",
-        "../RES_20230310_090649.mseed",
-        "../GUI_20240112_095041.mseed",
-        "../RES_20240112_095041.mseed",
-        ]
+#     clustering_files = [
+#         "../GUI_20230127_090749.mseed",
+#         "../RES_20230127_090749.mseed",
+#         "../GUI_20230103_090203.mseed",
+#         "../RES_20230103_090203.mseed",
+#         "../GUI_20230310_090649.mseed",
+#         "../RES_20230310_090649.mseed",
+#         "../GUI_20240112_095041.mseed",
+#         "../RES_20240112_095041.mseed",
+#         ]
 
-    figs = []
-    for file in clustering_files:
-        data = lecture_mseed(file)
-        trace = data[0]["data_samples"]
-        fs = data[0]["sample_rate_hz"]
-        start_str = data[0]["start_time"]
-        start_dt = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
-        time = [start_dt + timedelta(seconds=i/fs) for i in range(len(trace))]
+#     figs = []
+#     for file in clustering_files:
+#         data = lecture_mseed(file)
+#         trace = data[0]["data_samples"]
+#         fs = data[0]["sample_rate_hz"]
+#         start_str = data[0]["start_time"]
+#         start_dt = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
+#         time = [start_dt + timedelta(seconds=i/fs) for i in range(len(trace))]
         
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=time, y=trace, mode='lines'))
-        if "GUI" in file:
-            fig.update_layout(title=os.path.basename(file)+ " - capteur 1")
-        else:
-            fig.update_layout(title=os.path.basename(file)+ " - capteur 2")
-        figs.append(fig)
+#         fig = go.Figure()
+#         fig.add_trace(go.Scatter(x=time, y=trace, mode='lines'))
+#         if "GUI" in file:
+#             fig.update_layout(title=os.path.basename(file)+ " - capteur 1")
+#         else:
+#             fig.update_layout(title=os.path.basename(file)+ " - capteur 2")
+#         figs.append(fig)
 
-    # Affichage en 2 colonnes de 3
-    col1, col2 = st.columns(2)
-    for i, fig in enumerate(figs):
-        if i % 2 == 0:
-            col1.plotly_chart(fig, use_container_width=True)
-        else:
-            col2.plotly_chart(fig, use_container_width=True)
+#     # Affichage en 2 colonnes de 3
+#     col1, col2 = st.columns(2)
+#     for i, fig in enumerate(figs):
+#         if i % 2 == 0:
+#             col1.plotly_chart(fig, use_container_width=True)
+#         else:
+#             col2.plotly_chart(fig, use_container_width=True)
 
 
-    for type in data_types:
-        if type in detection_times.keys():
-            if len(detection_times[type]) == 0: # si pas de détection
-                st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : No detection", unsafe_allow_html=True)
+#     for type in data_types:
+#         if type in detection_times.keys():
+#             if len(detection_times[type]) == 0: # si pas de détection
+#                 st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : No detection", unsafe_allow_html=True)
 
-            else:
-                st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : {clustering_results[type]}", unsafe_allow_html=True)
+#             else:
+#                 st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : {clustering_results[type]}", unsafe_allow_html=True)
