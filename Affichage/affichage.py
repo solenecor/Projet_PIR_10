@@ -118,6 +118,11 @@ if st.session_state.trace_choice != st.session_state.previous_trace_choice:
 
 analysed_trace = denoised_trace if st.session_state.trace_choice == 'Denoised trace' else raw_trace
 
+# pour la partie clustering :
+if "distance_method" not in st.session_state :
+    st.session_state.distance_method = "Weighted visibility graph"
+
+
 
 
 
@@ -699,6 +704,11 @@ with st.container(height=2200):
             col1.plotly_chart(fig, use_container_width=True)
         else:
             col2.plotly_chart(fig, use_container_width=True)
+
+    # Choix de la méthode de calcul de distance :
+    distances = ("Weighted visibility graph", "Norme L1", "Norme L2", "Dynamic Time Warping")
+    st.radio("Méthode de calcul de distance:", distances, key='distance_method', horizontal=True)
+
 
     # Affichage du graphe :
     k = 3
