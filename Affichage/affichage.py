@@ -620,6 +620,9 @@ with st.container(height=1300):
                         st.number_input('Short window length (s) :', value=0.05, key='sw')
                     with col2:
                         st.number_input('Long window length (s) :', value=0.3, key='lw')
+                if type == "MCM":
+                    st.number_input('Threshold multiplier value :', value=5, key='k')
+
                     
     
                     
@@ -642,21 +645,21 @@ with st.container(height=1300):
 
 
 
-# # 4EME ENCADRÉ (CLUSTERING)
+# 4EME ENCADRÉ (CLUSTERING)
     
-# with st.container(height=2200):
-#     st.markdown("**Clustering :**")
+with st.container(height=2200):
+    st.markdown("**Clustering :**")
     
-#     clustering_files = [
-#         "../GUI_20230127_090749.mseed",
-#         "../RES_20230127_090749.mseed",
-#         "../GUI_20230103_090203.mseed",
-#         "../RES_20230103_090203.mseed",
-#         "../GUI_20230310_090649.mseed",
-#         "../RES_20230310_090649.mseed",
-#         "../GUI_20240112_095041.mseed",
-#         "../RES_20240112_095041.mseed",
-#         ]
+    clustering_files = [
+        "../GUI_20230127_090749.mseed",
+        "../RES_20230127_090749.mseed",
+        "../GUI_20230103_090203.mseed",
+        "../RES_20230103_090203.mseed",
+        "../GUI_20230310_090649.mseed",
+        "../RES_20230310_090649.mseed",
+        "../GUI_20240112_095041.mseed",
+        "../RES_20240112_095041.mseed",
+        ]
 
     figs = []
     for file in clustering_files:
@@ -667,21 +670,21 @@ with st.container(height=1300):
         start_dt = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
         time = [start_dt + timedelta(seconds=i/fs) for i in range(len(trace))]
         
-#         fig = go.Figure()
-#         fig.add_trace(go.Scatter(x=time, y=trace, mode='lines'))
-#         if "GUI" in file:
-#             fig.update_layout(title=os.path.basename(file)+ " - capteur 1")
-#         else:
-#             fig.update_layout(title=os.path.basename(file)+ " - capteur 2")
-#         figs.append(fig)
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=time, y=trace, mode='lines'))
+        if "GUI" in file:
+            fig.update_layout(title=os.path.basename(file)+ " - capteur 1")
+        else:
+            fig.update_layout(title=os.path.basename(file)+ " - capteur 2")
+        figs.append(fig)
 
-#     # Affichage en 2 colonnes de 3
-#     col1, col2 = st.columns(2)
-#     for i, fig in enumerate(figs):
-#         if i % 2 == 0:
-#             col1.plotly_chart(fig, use_container_width=True)
-#         else:
-#             col2.plotly_chart(fig, use_container_width=True)
+    # Affichage en 2 colonnes de 3
+    col1, col2 = st.columns(2)
+    for i, fig in enumerate(figs):
+        if i % 2 == 0:
+            col1.plotly_chart(fig, use_container_width=True)
+        else:
+            col2.plotly_chart(fig, use_container_width=True)
 
 
     for type in data_types:
@@ -689,5 +692,5 @@ with st.container(height=1300):
             if len(detection_times[type]) == 0: # si pas de détection
                 st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : No detection", unsafe_allow_html=True)
 
-#             else:
-#                 st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : {clustering_results[type]}", unsafe_allow_html=True)
+            else:
+                st.markdown(f"<span style='color:{colors[type]}; font-weight:bold;'>{type}</span> : {clustering_results[type]}", unsafe_allow_html=True)
