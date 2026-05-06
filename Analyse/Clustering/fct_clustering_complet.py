@@ -39,7 +39,26 @@ def egalise_longueur_serie(dict_data) :
             # print("Série", i, "modifiée, nouvelle longueur : ", dict_data["longueurs"][i])
     #print("Resample des séries fini")
 
+def normaliseur(s) :
+    """
+    Normalise la série s entre -1 et 1, en divisant pas la valeur maximale (en absolu)
+    Entrées :
+        s : array numpy de float
+    Sortie :
+        res : array numpy de float, compris entre -1 et 1
+    """
+    if s is not None :
+        val_max = np.max(np.absolute(s))
+        if (val_max == 0) or (len(s) == 0) :
+            res = s 
+        else :
+            res = s/val_max
+    else : 
+        res = None
+    return res
+
 def lecture_initiale() :
+    ### 6 fichiers, correspond à 3 événements captés par 2 capteurs GUI et RES
     data1_1 = lecture_mseed("GUI_20230103_090203.mseed")
     data1_2 = lecture_mseed("RES_20230103_090203.mseed")
     data2_1 = lecture_mseed("GUI_20230127_090749.mseed")
@@ -55,7 +74,7 @@ def lecture_initiale() :
     - RES_20230127_090749 : (34,36 ; 0)
     - GUI_20230310_090649 : (33,60 ; -28)
     - RES_20230310_090649 : (33,75 ; -2)
-    On prend 10 points avant la détection de l'événement
+    On prend 10 points avant la détection de l'événement, et l'équivalent de 50sec après
     """
 
     l_data = [data1_1, data1_2, data2_1, data2_2, data3_1, data3_2]
@@ -64,13 +83,19 @@ def lecture_initiale() :
     ### Ajout de toutes les séries temporelles dans la liste
     for i in range(len(l_data)) : 
         dict_data["sr"].append(l_data[i][0]["sample_rate_hz"])
-        debut = int(dict_data["tags"][i] * dict_data["sr"][-1]) - 10
-        serie = np.array(l_data[i][0]["data_samples"])
 
         # On prend 50 secondes de données à partir du début de l'événement
+        debut = int(dict_data["tags"][i] * dict_data["sr"][-1]) - 10
+        serie = np.array(l_data[i][0]["data_samples"])
         serie = serie[debut:debut + int(50 * dict_data["sr"][-1])]
+
+        # On enlève le bruit de la série :
         serie_lisse = eps(serie, window_size=10)
-        dict_data["series"].append(serie_lisse)
+
+        # On normalise la série entre -1 et 1 :
+        serie_norme = normaliseur(serie_lisse)
+
+        dict_data["series"].append(serie_norme)
         dict_data["longueurs"].append(len(serie_lisse))
 
         print("Série", i, "ajoutée, longueur : ", len(serie_lisse))
@@ -210,67 +235,3 @@ def clustering_distance_L2(l_series, k) :
 
     return G, m_s_knn
 
-
-if __name__ == "__main__" :
-
-    series = lecture_initiale()
-
-    start_time = time()
-    G_visibility, m_visibility = clustering_visibility_graph(series, nb_seg=30)
-    print("Graphe du clustering 1 construit")
-    end_time = time()
-    print(f"Temps de construction du graphe 1 : {end_time - start_time:.2f} secondes")
-   
-    start_time = time()
-    G_L1, m_L1 = clustering_distance_L1(series, 2)
-    print("Graphe du clustering 2 construit")
-    end_time = time()
-    print(f"Temps de construction du graphe 2 : {end_time - start_time:.2f} secondes")
-
-    start_time = time()
-    G_L2, m_L2 = clustering_distance_L2(series, 2)
-    print("Graphe du clustering 3 construit")
-    end_time = time()
-    print(f"Temps de construction du graphe 3 : {end_time - start_time:.2f} secondes")
-    
-    start_time = time()
-    G_dtw, m_dtw = clustering_distance_dtw(series, 2)
-    print("Graphe du clustering 4 construit")
-    end_time = time()
-    print(f"Temps de construction du graphe 4 : {end_time - start_time:.2f} secondes")
-
-    plt.figure(1)
-    pos = nx.spring_layout(G_visibility, weight='weight')
-    nx.draw_networkx(G_visibility, pos, with_labels=True)
-    edge_labels = {k: round(v, 3) for k, v in nx.get_edge_attributes(G_visibility, 'weight').items()}
-    nx.draw_networkx_edge_labels(G_visibility, pos, edge_labels=edge_labels)
-
-
-    plt.figure(2)
-    pos = nx.spring_layout(G_L1, weight='weight')
-    nx.draw_networkx(G_L1, pos, with_labels=True)
-    edge_labels = {k: round(v, 3) for k, v in nx.get_edge_attributes(G_L1, 'weight').items()}
-    nx.draw_networkx_edge_labels(G_L1, pos, edge_labels=edge_labels)
-
-    plt.figure(3)
-    pos = nx.spring_layout(G_L2, weight='weight')
-    nx.draw_networkx(G_L2, pos, with_labels=True)
-    edge_labels = {k: round(v, 3) for k, v in nx.get_edge_attributes(G_L2, 'weight').items()}
-    nx.draw_networkx_edge_labels(G_L2, pos, edge_labels=edge_labels)
-
-
-    plt.figure(4)
-    pos = nx.spring_layout(G_dtw, weight='weight')
-    nx.draw_networkx(G_dtw, pos, with_labels=True)
-    edge_labels = {k: round(v, 3) for k, v in nx.get_edge_attributes(G_dtw, 'weight').items()}
-    nx.draw_networkx_edge_labels(G_dtw, pos, edge_labels=edge_labels)
-
-    plt.show()
-
-
-    ### Comparaison de la similarité si on a que 2 séries:
-    
-    """print(f"Similarité ac visibility graph : {G_visibility.edges[0,1]['weight']}")
-    print(f"Similarité ac DTW : {G_dtw.edges[0,1]['weight']}")
-    print(f"Similarité ac L1 : {G_L1.edges[0,1]['weight']}")
-    print(f"Similarité ac L2 : {G_L2.edges[0,1]['weight']}")"""
