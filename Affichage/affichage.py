@@ -77,7 +77,7 @@ raw_trace = data_trace[0]["data_samples"]
 if 'denoising_method' not in st.session_state:
     st.session_state.denoising_method = 'EPS'
 if 'window_eppf' not in st.session_state:
-    st.session_state.window_eppf = 81
+    st.session_state.window_eppf = 10
 if 'degree_eppf' not in st.session_state:
     st.session_state.degree_eppf = 2
 if 'window_eps' not in st.session_state:
@@ -571,7 +571,7 @@ with st.container(height=1300):
         if method == 'EPPF':
             c1, c2 = st.columns(2)
             with c1:
-                st.number_input('Window size (samples):', value=81, key='window_eppf')
+                st.number_input('Window size (samples):', value=10, key='window_eppf')
             with c2:
                 st.number_input('Degree :', value=2, key='degree_eppf')
         elif method == 'EPS':
