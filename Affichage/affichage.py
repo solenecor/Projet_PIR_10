@@ -18,7 +18,7 @@ from Analyse.Smoothing.eppf import eppf
 from Analyse.Smoothing.eps import eps
 from Analyse.MER.MER_data import MER, detection_MER
 from Analyse.Anomaly_detection_IMER.code_test_imer import compute_imer
-from Analyse.TDER.TDER import TDER, detection_TDER
+from Analyse.TDER.TDER import DER, detection_DER
 from Analyse.Smoothing.wavelet import wavelet_transform
 from Analyse.MCM.mcm import compute_mcm
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Analyse', 'Clustering')))
@@ -193,17 +193,18 @@ if 'snr_bas' not in st.session_state:
 imer_curve, imer_threshold, imer_detection_indexes = compute_imer(analysed_trace, sample_rate, st.session_state.snr_bas, st.session_state.wait_time)
 
 
-    # TDER
+    # DER
 if 'sw' not in st.session_state:
     st.session_state.sw = 0.05
 if 'lw' not in st.session_state:
     st.session_state.lw = 0.3
 
-tder_ratio = TDER(analysed_trace, st.session_state.sw, st.session_state.lw, sample_rate)
 
-st.session_state.tder_threshold = seuil_tder = np.mean(tder_ratio) + 2*np.std(tder_ratio)
+der_ratio = DER(analysed_trace, st.session_state.sw, st.session_state.lw, sample_rate)
 
-tder_detection_indexes = detection_TDER(tder_ratio, st.session_state.tder_threshold, st.session_state.wait_time)
+st.session_state.der_threshold = seuil_der = np.mean(der_ratio) + 2*np.std(der_ratio)
+
+der_detection_indexes = detection_DER(der_ratio, st.session_state.der_threshold, st.session_state.wait_time)
 
 #MCM
 if 'k' not in st.session_state:
@@ -212,12 +213,12 @@ mcm_er_raw, mcm_er_filtered, mcm_derivative, mcm_detection_indexes, mcm_threshol
 
 
     # REGROUPEMENT
-data = {"Raw trace" : raw_trace[start_idx:end_idx], "Denoised trace" : denoised_trace[start_idx:end_idx], "STA/LTA" : sta_lta_ratio , "R2" : r2, "R3" : r3, "MER" : mer_ratio , "IMER" : imer_curve, "TDER" : tder_ratio, "MCM" : mcm_er_raw}
-detection_times = {"STA/LTA" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in sta_lta_detection_indexes], "Multi-window" :[time[0] + timedelta(seconds=idx / sample_rate) for idx in multi_window_detection_indexes], "MER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in mer_detection_indexes], "IMER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in imer_detection_indexes], "TDER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in tder_detection_indexes], "MCM" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in mcm_detection_indexes]}
-clustering_results = {"STA/LTA" : "Earthquake", "Multi-window" : "Quake", "MER" : "Earthquake", "IMER" : "Rainfall", "TDER" : 'Quake', "MCM" : "Earthquake"}
+data = {"Raw trace" : raw_trace[start_idx:end_idx], "Denoised trace" : denoised_trace[start_idx:end_idx], "STA/LTA" : sta_lta_ratio , "R2" : r2, "R3" : r3, "MER" : mer_ratio , "IMER" : imer_curve, "DER" : der_ratio, "MCM" : mcm_er_raw}
+detection_times = {"STA/LTA" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in sta_lta_detection_indexes], "Multi-window" :[time[0] + timedelta(seconds=idx / sample_rate) for idx in multi_window_detection_indexes], "MER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in mer_detection_indexes], "IMER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in imer_detection_indexes], "DER" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in der_detection_indexes], "MCM" : [time[0] + timedelta(seconds=idx / sample_rate) for idx in mcm_detection_indexes]}
+clustering_results = {"STA/LTA" : "Earthquake", "Multi-window" : "Quake", "MER" : "Earthquake", "IMER" : "Rainfall", "DER" : 'Quake', "MCM" : "Earthquake"}
 
     # DIFFERENTES DONNEES AFFICHABLES
-data_types = ["Raw trace", "Denoised trace", "STA/LTA", "Multi-window", "MER", "IMER", 'TDER', 'MCM']
+data_types = ["Raw trace", "Denoised trace", "STA/LTA", "Multi-window", "MER", "IMER", 'DER', 'MCM']
 selected = []
 
 
@@ -261,7 +262,7 @@ df['H3'] = h3
 df['sta_lta_threshold'] = [st.session_state.sta_lta_threshold]*len(denoised_trace[start_idx:end_idx])
 df['imer_threshold'] = [imer_threshold]*len(denoised_trace[start_idx:end_idx])
 df['mer_threshold'] = [mer_threshold]*len(denoised_trace[start_idx:end_idx])
-df['tder_threshold'] = [st.session_state.tder_threshold]*len(denoised_trace[start_idx:end_idx])
+df['der_threshold'] = [st.session_state.der_threshold]*len(denoised_trace[start_idx:end_idx])
 df['mcm_threshold'] = [mcm_threshold]*len(denoised_trace[start_idx:end_idx])
 
 # couleurs
@@ -437,7 +438,7 @@ with st.container(height=490):
                     ), secondary_y=True
                     )
 
-                elif type == 'TDER':
+                elif type == 'DER':
 
                     fig.add_trace(go.Scatter(
                         x=df["time"], 
@@ -452,7 +453,7 @@ with st.container(height=490):
 
                     fig.add_trace(go.Scatter(
                         x=df["time"], 
-                        y=df['tder_threshold'], 
+                        y=df['der_threshold'], 
                         name=f"{type} threshold",
                         legendgroup=type,
                         showlegend=True,
@@ -515,7 +516,15 @@ with st.container(height=490):
     if st.session_state.trace_choice in selected:
         arrowsize = 30
         time_numeric = [t.timestamp() for t in time] # temps de la trace en format numérique pour numpy
-        for method, list_events in detection_times.items():
+
+        secondary = ['Raw trace', 'Denoised trace']
+        if selected == ['Raw trace'] or selected == ['Denoised trace']:
+            to_show = ['STA/LTA', 'Multi-window', 'MER', 'IMER', 'DER', 'MCM']
+        else:
+            to_show = [s for s in selected if s not in secondary]
+        
+        for method in to_show:
+            list_events = detection_times[method]
             if len(detection_times[method]) == 0: # si pas de détection
                 continue
             else:
@@ -621,12 +630,13 @@ with st.container(height=1300):
                 if type == "IMER":
                     st.radio("Low SNR :", (True, False), key='snr_bas', horizontal=True)
                     
-                if type == "TDER":
+                if type == "DER":
                     col1, col2 = st.columns(2)
                     with col1:
                         st.number_input('Short window length (s) :', value=0.05, key='sw')
                     with col2:
                         st.number_input('Long window length (s) :', value=0.3, key='lw')
+
                 if type == "MCM":
                     st.number_input('Threshold multiplier value :', value=5, key='k')
 
