@@ -19,16 +19,8 @@ from Analyse.Smoothing.eps import eps
 from Analyse.MER.MER_data import MER, detection_MER
 from Analyse.Anomaly_detection_IMER.code_test_imer import compute_imer
 from Analyse.TDER.TDER import TDER, detection_TDER
-<<<<<<< HEAD
 from Analyse.Smoothing.wavelet import wavelet_transform
 from Analyse.MCM.mcm import compute_mcm
-=======
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Analyse', 'Clustering')))
-from Analyse.Clustering.fct_clustering_complet import clustering_distance_dtw, clustering_distance_L1, clustering_distance_L2, clustering_visibility_graph, egalise_longueur_serie, affiche_graphe
-
-
->>>>>>> eb47fcf (Ajout de l'affichage du graphe obtenu par calcul de distance/similarité, et suppression de print inutile)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Analyse', 'Clustering')))
 from Analyse.Clustering.fct_clustering_complet import clustering_distance_dtw, clustering_distance_L1, clustering_distance_L2, clustering_visibility_graph, egalise_longueur_serie, affiche_graphe
 
