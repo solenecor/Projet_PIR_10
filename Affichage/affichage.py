@@ -563,7 +563,7 @@ with st.container(height=1300):
 
     st.radio("**Trace analysed :**", ('Denoised trace', 'Raw trace'), horizontal=True, key='trace_choice')
     
-    st.number_input('**Wait time for new detection (s):**', value=10, key='wait_time')
+    st.number_input('**Wait time until next detection (s):**', value=10, key='wait_time')
 
     st.markdown(f"<span style='color:{colors['Denoised trace']}; font-weight:bold;'>Denoised trace :</span>", unsafe_allow_html=True) 
     method = st.radio("Method :", ('EPS', 'EPPF', 'Wavelet transform'), key='denoising_method', horizontal=True, label_visibility="collapsed")
