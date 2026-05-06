@@ -30,6 +30,10 @@ def affiche_graphe(G):
 def egalise_longueur_serie(dict_data) : 
     """
     Resample les séries du dictionnaire dict_data pour que toutes les séries aient le même nombres de points
+    Entrées : 
+        dict_data : dictionnaire python, doit contenir une clé "series" et une clé "longueurs" pointant vers des listes
+    Sorties : 
+        None
     """
     minimum = min(dict_data["longueurs"])
     for i in range(len(dict_data["series"])) :
@@ -96,9 +100,9 @@ def lecture_initiale() :
         serie_norme = normaliseur(serie_lisse)
 
         dict_data["series"].append(serie_norme)
-        dict_data["longueurs"].append(len(serie_lisse))
+        dict_data["longueurs"].append(len(serie_norme))
 
-        print("Série", i, "ajoutée, longueur : ", len(serie_lisse))
+        print("Série", i, "ajoutée, longueur : ", len(serie_norme))
     
     ### On met toutes les séries à la même longueur 
     egalise_longueur_serie(dict_data)

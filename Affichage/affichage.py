@@ -22,7 +22,7 @@ from Analyse.TDER.TDER import TDER, detection_TDER
 from Analyse.Smoothing.wavelet import wavelet_transform
 from Analyse.MCM.mcm import compute_mcm
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Analyse', 'Clustering')))
-from Analyse.Clustering.fct_clustering_complet import clustering_distance_dtw, clustering_distance_L1, clustering_distance_L2, clustering_visibility_graph, egalise_longueur_serie, affiche_graphe
+from Analyse.Clustering.fct_clustering_complet import clustering_distance_dtw, clustering_distance_L1, clustering_distance_L2, clustering_visibility_graph, egalise_longueur_serie, affiche_graphe, normaliseur 
 
 
 
@@ -660,15 +660,29 @@ with st.container(height=2200):
         "../GUI_20240112_095041.mseed",
         "../RES_20240112_095041.mseed",
         ]
-
+    
+    dict_series = {"series" : [], "longueurs" : [], "fs" : None}
     figs = []
     for file in clustering_files:
         data = lecture_mseed(file)
         trace = data[0]["data_samples"]
+        
         fs = data[0]["sample_rate_hz"]
         start_str = data[0]["start_time"]
         start_dt = datetime.fromisoformat(start_str.replace('Z', '+00:00'))
         time = [start_dt + timedelta(seconds=i/fs) for i in range(len(trace))]
+
+        ### Complétion du dictionnaire des séries :
+        # On enlève le bruit de la série :
+        trace_lisse = eps(trace, window_size=5)
+        # On normalise la série entre -1 et 1 :
+        trace_norme = normaliseur(trace_lisse)
+        dict_series["series"].append(trace_norme)
+        dict_series["longueurs"].append(len(trace_norme))
+
+        ### Resampling pour mettre toutes les séries à la même longueur 
+        egalise_longueur_serie(dict_series)
+
         
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=time, y=trace, mode='lines'))
@@ -686,6 +700,19 @@ with st.container(height=2200):
         else:
             col2.plotly_chart(fig, use_container_width=True)
 
+    # Affichage du graphe :
+    k = 3
+    G, _ = clustering_visibility_graph(k, dict_series["series"], nb_seg=30)
+    # On récupère les arrêtes de poids non nul : 
+    G.edges(data=True)
+    aretes_filtrees = [(u, v) for u, v, d in G.edges(data=True) if d["weight"] != 0]
+    # On affiche le graphe avec un force layout (le poids représente la force d'attraction)
+    fig, ax = plt.subplots()
+    pos = nx.spring_layout(G, weight='weight')
+    nx.draw_networkx(G, pos, with_labels=True, ax = ax, edgelist = aretes_filtrees)
+    edge_labels = {k: round(v, 3) for k, v in nx.get_edge_attributes(G, 'weight').items() if v!=0}
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+    st.pyplot(fig)
 
     for type in data_types:
         if type in detection_times.keys():
