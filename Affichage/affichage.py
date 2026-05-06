@@ -363,7 +363,7 @@ with st.container(height=490):
                     fig.add_trace(go.Scatter(
                         x=df["time"], 
                         y=np.abs(analysed_trace), 
-                        name=f"Absolute value of {st.session_state.trace_choice}",
+                        name=f"Absolute value of the {st.session_state.trace_choice}",
                         showlegend=True,
                         line=dict(dash='dashdot', color=colors['Denoised trace']),
                         mode='lines'
