@@ -3,6 +3,7 @@ from random import randint
 import matplotlib.pyplot as plt
 import glob
 from Lecture_data.lecture_mseed import *
+#from lecture_mseed import lecture_mseed
 import time
 
 def DER(signal, sw, lw, fs):
@@ -14,16 +15,25 @@ def DER(signal, sw, lw, fs):
 
     for t in range(nl+ns, len(signal)-ns):
         # Calculs d'énergies
-        E1 = np.mean(energy[t : t+ns-1])
-        E2 = np.mean(energy[t-nl+1 : t])
-        E3 = np.mean(energy[t-ns-nl+1 : t-ns])
+        E1 = np.mean(energy[t : t+ns])
+        E2 = np.mean(energy[t-nl : t])
+        E3 = np.mean(energy[t-ns-nl : t-ns])
         
+        E1 = np.maximum(E1, 1e-6)
         E2 = np.maximum(E2, 1e-6)
         E3 = np.maximum(E3, 1e-6)
         
+        if np.isnan(E1) or np.isnan(E2) or np.isnan(E3):
+            print("Fenêtre vide à t =", t)
+            print("t =", t, "ns =", ns, "nl =", nl)
+            print("E1 window:", t, ":", t+ns)
+            print("E2 window:", t-nl, ":", t)
+            print("E3 window:", t-nl-ns, ":", t-ns)
+
+
         # Ratios d'énergie
-        ER12 = E1/E2
-        ER13 = E1/E3
+        ER12 = np.maximum(E1/E2, 1e-12)
+        ER13 = np.maximum(E1/E3, 1e-12)
             
         der[t] = np.log(ER13) - np.log(ER12)
 
@@ -69,11 +79,11 @@ def TDER(signal, sw, lw, fs):
     tder = np.concatenate(([tder[0]], tder, [tder[-1]])) # pour avoir le meme nombre de points
     return tder
 
-def detection_DER(der, seuil):
+def detection_DER(der, seuil, wait_time):
     detect = []
     for t in range(len(der)):
         if der[t] >= seuil:
-            if not (detect != [] and t-detect[-1] <= 10):
+            if not (detect != [] and t-detect[-1] <= wait_time*100):
                 detect.append(t)
     return detect
 
@@ -84,25 +94,15 @@ def detection_TDER(tder, seuil, wait_time):
     detect = []
     for t in range(len(tder)):
         if tder[t] >= seuil:
-            if not (detect != [] and t-detect[-1] <= wait_time):
+            if not (detect != [] and t-detect[-1] <= wait_time*100):
                 detect.append(t)
     return detect
 
 
 if __name__=="__main__":
-    data_folder = "trace_capteur"
-    fs = 100  # sampling rate (Hz)
-
-    # Concatenate data from all file in the data folder
-    all_data = []
-    for fpath in sorted(glob.glob(data_folder + "/geophone_*.dat")):
-        data = np.fromfile(fpath, dtype=np.int16)
-        all_data.append(data)
-    trace = np.array(np.concatenate(all_data), dtype=np.float64)
-    """
-    trace = lecture_mseed("event.mseed")[0]['data_samples']
-    fs = lecture_mseed("event.mseed")[0]['sample_rate_hz']
-    """
+    trace = lecture_mseed("data_node_1_part.mseed")[0]['data_samples']
+    fs = lecture_mseed("data_node_1_part.mseed")[0]['sample_rate_hz']
+    
     sw = 0.05  # short window length in s
     lw = 0.3 # long window length in s
 
@@ -111,14 +111,14 @@ if __name__=="__main__":
     Der = DER(trace, sw, lw, fs)
     fin_cal_der = time.time()
     seuil_der = np.mean(Der) + 2*np.std(Der)
-    det_der = detection_DER(Der, seuil_der)
+    det_der = detection_DER(Der, seuil_der, 10)
     fin_det_der = time.time()
 
     deb_tder = time.time()
     Tder = TDER(trace, sw, lw, fs)
     fin_cal_tder = time.time()
     seuil_tder = np.mean(Tder) + 2*np.std(Tder)
-    det_tder = detection_TDER(Tder, seuil_tder)
+    det_tder = detection_TDER(Tder, seuil_tder, 10)
     fin_det_tder = time.time()
 
     print(f"DER : {det_der}")
