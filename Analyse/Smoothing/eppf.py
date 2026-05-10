@@ -15,21 +15,24 @@ except ImportError as e:
     MSEED_AVAILABLE = False
 
 def eppf(data, window_size, degree):
+    """
+    Filtre EPPF (Edge-Preserving Polynomial Fitting) ultra-optimisé par vectorisation.
+    """
     data = np.asarray(data, dtype=float)
-    n    = len(data)
-    w    = window_size
-    half = w // 2
-
-    x      = np.arange(w, dtype=float)
-    V      = np.vander(x, degree + 1)        
-    V_pinv = np.linalg.pinv(V)                 
-    v_center = np.array([half**p for p in range(degree, -1, -1)], dtype=float)
-    h = v_center @ V_pinv
-    padded = np.pad(data, (half, half), mode='edge')
-
-    windows     = sliding_window_view(padded, w)  
-    eppf_values = windows @ h                      
- 
+    n = len(data)
+    w = window_size
+    x = np.arange(w, dtype=float)
+    V = np.vander(x, degree + 1)
+    H = V @ np.linalg.pinv(V)
+    padded = np.pad(data, (w - 1, w - 1), mode='edge')
+    windows = sliding_window_view(padded, w)
+    Y_hat = windows @ H.T 
+    errors = np.sum((windows - Y_hat)**2, axis=1)
+    errors_2d = sliding_window_view(errors, w)
+    best_local = np.argmin(errors_2d, axis=1)
+    best_global_windows = np.arange(n) + best_local
+    local_positions = w - 1 - best_local
+    eppf_values = Y_hat[best_global_windows, local_positions]
     return eppf_values
 
 if __name__ == "__main__":
