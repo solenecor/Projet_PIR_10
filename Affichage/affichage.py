@@ -144,11 +144,11 @@ time = time_full[start_idx:end_idx]
 
     # STA/LTA
 if 'sta_duration_s' not in st.session_state:
-    st.session_state.sta_duration_s = 1.0
+    st.session_state.sta_duration_s = 0,1
 if 'lta_duration_s' not in st.session_state:
-    st.session_state.lta_duration_s = 10
+    st.session_state.lta_duration_s = 1
 if'sta_lta_threshold' not in st.session_state:
-    st.session_state.sta_lta_threshold = 4
+    st.session_state.sta_lta_threshold = 3
 
 ns = int(st.session_state.sta_duration_s * sample_rate)
 nl = int(st.session_state.lta_duration_s * sample_rate)
@@ -608,11 +608,11 @@ with st.container(height=1300):
                 if type == "STA/LTA":
                     col1, col2, col3 = st.columns(3)
                     with col1:
-                        st.number_input('STA window length (s):', value=1.0, key='sta_duration_s')
+                        st.number_input('STA window length (s):', value=0.1, key='sta_duration_s')
                     with col2:
-                        st.number_input('LTA window length (s):', value=10, key='lta_duration_s')
+                        st.number_input('LTA window length (s):', value=1, key='lta_duration_s')
                     with col3:
-                        st.number_input('STA/LTA threshold value :', value=4, key='sta_lta_threshold')
+                        st.number_input('STA/LTA threshold value :', value=3, key='sta_lta_threshold')
 
                 if type == "Multi-window":
                     col1, col2, col3, col4 = st.columns(4)
