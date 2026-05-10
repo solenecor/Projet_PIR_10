@@ -144,7 +144,7 @@ time = time_full[start_idx:end_idx]
 
     # STA/LTA
 if 'sta_duration_s' not in st.session_state:
-    st.session_state.sta_duration_s = 0,1
+    st.session_state.sta_duration_s = 0.1
 if 'lta_duration_s' not in st.session_state:
     st.session_state.lta_duration_s = 1
 if'sta_lta_threshold' not in st.session_state:
