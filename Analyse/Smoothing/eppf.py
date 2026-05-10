@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 from pathlib import Path
+from numpy.lib.stride_tricks import sliding_window_view
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -14,28 +15,34 @@ except ImportError as e:
     MSEED_AVAILABLE = False
 
 def eppf(data, window_size, degree):
-    n = len(data)
-    eppf_values = np.zeros(n)
-    coeffs_dict = {}
-    for center in range(n):
-        indices = np.clip(
-            np.arange(center - window_size // 2, center + window_size // 2 + 1),
-            0, n - 1
-        )
-        x = np.arange(len(indices))
-        y = data[indices]
-        coeffs = np.polyfit(x, y, degree)
-        coeffs_dict[center] = coeffs
-    for i in range(n):
-        coeffs = coeffs_dict[i]
-        x_center = window_size // 2
-        eppf_values[i] = np.polyval(coeffs, x_center)
-
+    data = np.asarray(data, dtype=float)
+    n    = len(data)
+    w    = window_size
+    half = w // 2
+ 
+    # ── Précalcul du noyau d'évaluation h (fait une seule fois) ──────────────
+    # Pour une fenêtre de taille w et un degré fixés, l'évaluation du polynôme
+    # au centre est linéaire en y : eppf[i] = h @ y_i
+    # avec h = v_center @ pinv(V), où V est la matrice de Vandermonde sur x=[0..w-1].
+    x      = np.arange(w, dtype=float)
+    V      = np.vander(x, degree + 1)          # shape (w, degree+1)
+    V_pinv = np.linalg.pinv(V)                 # shape (degree+1, w)
+    # vecteur ligne correspondant à x_center dans la base polynomiale
+    v_center = np.array([half**p for p in range(degree, -1, -1)], dtype=float)
+    h = v_center @ V_pinv                      # shape (w,)  ← noyau FIR équivalent
+ 
+    # ── Padding bord-à-bord (équivalent au np.clip de la version originale) ──
+    padded = np.pad(data, (half, half), mode='edge')
+ 
+    # ── Toutes les fenêtres puis produit matriciel en une passe ──────────────
+    windows     = sliding_window_view(padded, w)   # shape (n, w)
+    eppf_values = windows @ h                      # shape (n,)
+ 
     return eppf_values
 
 if __name__ == "__main__":
-    mseed_file = "event.mseed"
-    window_size = 81
+    mseed_file = "event_CREF.mseed"
+    window_size = 21
     degree = 2
 
     if MSEED_AVAILABLE:

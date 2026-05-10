@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 from pathlib import Path
+from numpy.lib.stride_tricks import sliding_window_view
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -15,31 +16,26 @@ except ImportError as e:
 
 def eps(data, window_size):
 
-    n = len(data)
-    eps_values = np.zeros(n)
-    means_dict = {}
-    stds_dict = {}
-    
-    for start in range(-(window_size - 1), n):
-        indices = np.clip(np.arange(start, start + window_size), 0, n - 1)
-        window = data[indices]
-        
-        means_dict[start] = np.mean(window)
-        stds_dict[start] = np.std(window)
-    
-    for i in range(n):
-        start_range = i - (window_size - 1)
-        end_range = i
-        window_range = np.arange(start_range, end_range + 1)
-        stds_array = np.array([stds_dict[j] for j in window_range])
-        best_idx = window_range[np.argmin(stds_array)]
-        eps_values[i] = means_dict[best_idx]
-    
+    data = np.asarray(data, dtype=float)
+    n    = len(data)
+    w    = window_size
+ 
+    padded = np.pad(data, (w - 1, w - 1), mode='edge')
+ 
+    windows   = sliding_window_view(padded, w)  
+    all_means = windows.mean(axis=1)
+    all_stds  = windows.std(axis=1)
+ 
+    stds_2d    = sliding_window_view(all_stds,  w)  
+    means_2d   = sliding_window_view(all_means, w) 
+    best_local = np.argmin(stds_2d, axis=1)
+    eps_values = means_2d[np.arange(n), best_local]
+ 
     return eps_values
 
 if __name__ == "__main__":
-    mseed_file = "event.mseed"
-    window_size = 5
+    mseed_file = "event_CREF.mseed"
+    window_size = 61
 
     if MSEED_AVAILABLE:
         print(f"1. Lecture du fichier MSEED: {mseed_file}")
