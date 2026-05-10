@@ -19,24 +19,16 @@ def eppf(data, window_size, degree):
     n    = len(data)
     w    = window_size
     half = w // 2
- 
-    # ── Précalcul du noyau d'évaluation h (fait une seule fois) ──────────────
-    # Pour une fenêtre de taille w et un degré fixés, l'évaluation du polynôme
-    # au centre est linéaire en y : eppf[i] = h @ y_i
-    # avec h = v_center @ pinv(V), où V est la matrice de Vandermonde sur x=[0..w-1].
+
     x      = np.arange(w, dtype=float)
-    V      = np.vander(x, degree + 1)          # shape (w, degree+1)
-    V_pinv = np.linalg.pinv(V)                 # shape (degree+1, w)
-    # vecteur ligne correspondant à x_center dans la base polynomiale
+    V      = np.vander(x, degree + 1)        
+    V_pinv = np.linalg.pinv(V)                 
     v_center = np.array([half**p for p in range(degree, -1, -1)], dtype=float)
-    h = v_center @ V_pinv                      # shape (w,)  ← noyau FIR équivalent
- 
-    # ── Padding bord-à-bord (équivalent au np.clip de la version originale) ──
+    h = v_center @ V_pinv
     padded = np.pad(data, (half, half), mode='edge')
- 
-    # ── Toutes les fenêtres puis produit matriciel en une passe ──────────────
-    windows     = sliding_window_view(padded, w)   # shape (n, w)
-    eppf_values = windows @ h                      # shape (n,)
+
+    windows     = sliding_window_view(padded, w)  
+    eppf_values = windows @ h                      
  
     return eppf_values
 
