@@ -15,9 +15,6 @@ except ImportError as e:
     MSEED_AVAILABLE = False
 
 def eppf(data, window_size, degree):
-    """
-    Filtre EPPF (Edge-Preserving Polynomial Fitting) ultra-optimisé par vectorisation.
-    """
     data = np.asarray(data, dtype=float)
     n = len(data)
     w = window_size
