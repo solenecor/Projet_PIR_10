@@ -157,19 +157,19 @@ sta_lta_detection_indexes, sta_lta_ratio = detection_STA_LTA(analysed_trace, ns,
 
     # MULTI-WINDOW
 if 'alpha' not in st.session_state:
-    st.session_state.alpha = 3
+    st.session_state.alpha = 3.5
 if 'm' not in st.session_state:
-    st.session_state.m = 40
+    st.session_state.m = 30
 if 'n' not in st.session_state:
-    st.session_state.n = 30
+    st.session_state.n = 5
 if 'q' not in st.session_state:
-    st.session_state.q = 30
+    st.session_state.q = 5
 if 'd' not in st.session_state:
-    st.session_state.d = 10
+    st.session_state.d = 2
 if 'p' not in st.session_state:
-    st.session_state.p = 5
+    st.session_state.p = 2
 if 'average_snr' not in st.session_state:
-    st.session_state.average_snr = 3
+    st.session_state.average_snr = 2.5
 
 multi_window_detection_indexes, r2, r3, h1, h2, h3 = detection_multi_window(analysed_trace, st.session_state.m, st.session_state.n, st.session_state.q, st.session_state.d, st.session_state.p, st.session_state.alpha, st.session_state.average_snr, sample_rate, st.session_state.wait_time)
 
@@ -617,16 +617,16 @@ with st.container(height=1300):
                 if type == "Multi-window":
                     col1, col2, col3, col4 = st.columns(4)
                     with col1:
-                        st.number_input('BTA window length (samples):', value=40, key='m')
-                        st.number_input('Number of shifted samples (for H1) :', value=5, key='p')
+                        st.number_input('BTA window length (samples):', value=30, key='m')
+                        st.number_input('Number of shifted samples (for H1) :', value=2, key='p')
                     with col2:
-                        st.number_input('ATA window length (samples) :', value=30, key='n')
-                        st.number_input('Average value of SNR :', value=3, key='average_snr')
+                        st.number_input('ATA window length (samples) :', value=5, key='n')
+                        st.number_input('Average value of SNR :', value=2.5, key='average_snr')
                     with col3:
-                        st.number_input('DTA window length (samples):', value=30, key='q')
-                        st.number_input('Coefficient to adjust the height of H1 (α):', value=3, key='alpha')
+                        st.number_input('DTA window length (samples):', value=5, key='q')
+                        st.number_input('Coefficient to adjust the height of H1 (α):', value=3.5, key='alpha')
                     with col4:
-                        st.number_input('DTA delay (samples):', value=10, key='d')
+                        st.number_input('DTA delay (samples):', value=2, key='d')
 
                 if type == "MER":
                     col1, col2 = st.columns(2)
