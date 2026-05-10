@@ -518,10 +518,14 @@ with st.container(height=490):
         time_numeric = [t.timestamp() for t in time] # temps de la trace en format numérique pour numpy
 
         secondary = ['Raw trace', 'Denoised trace']
-        if selected == ['Raw trace'] or selected == ['Denoised trace']:
+        methods_selected = [s for s in selected if s not in ['Raw trace', 'Denoised trace']]
+
+        # Si pas de méthodes selectionnées
+        if not methods_selected:
+            # on affiche tout par défaut
             to_show = ['STA/LTA', 'Multi-window', 'MER', 'IMER', 'DER', 'MCM']
         else:
-            to_show = [s for s in selected if s not in secondary]
+            to_show = methods_selected
         
         for method in to_show:
             list_events = detection_times[method]
