@@ -34,7 +34,6 @@ def STA_LTA(trace, i, ns, nl, threshold):
 
     
 def detection_STA_LTA(trace, ns, nl, threshold, sample_rate, wait_time):
-    start = time()
     i = 0
     ratio = [-10] * len(trace)
     detection_indexes = []
@@ -49,7 +48,7 @@ def detection_STA_LTA(trace, ns, nl, threshold, sample_rate, wait_time):
                 detection_indexes.append(detection_index)
         
         i += 1 
-    print(time()-start)
+    
     return detection_indexes, ratio
 
 if __name__ == "__main__":
@@ -59,5 +58,7 @@ if __name__ == "__main__":
     raw_trace = data_trace[0]["data_samples"]
     ns = int(0.1 * sample_rate)
     nl = int(1 * sample_rate)
+    start = time()
     for i in range(10):
         detection_STA_LTA(raw_trace, ns, nl, 3, sample_rate, 5)
+    print((time()-start)/10)
