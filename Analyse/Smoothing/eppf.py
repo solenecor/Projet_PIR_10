@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 from pathlib import Path
 from numpy.lib.stride_tricks import sliding_window_view
+import time
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -34,7 +35,7 @@ def eppf(data, window_size, degree):
 
 if __name__ == "__main__":
     mseed_file = "event_CREF.mseed"
-    window_size = 21
+    window_size = 61
     degree = 2
 
     if MSEED_AVAILABLE:
@@ -62,12 +63,15 @@ if __name__ == "__main__":
                 print(f"    Mean:  {np.mean(data_raw):.6f}")
                 print(f"    Std:   {np.std(data_raw):.6f}")
                 
+                debut = time.perf_counter()
                 data_filtered = eppf(data_raw, window_size, degree)
+                fin = time.perf_counter()
                 
                 print(f"\n  [FILTRÉES (EPPF)]")
                 print(f"    Range: {np.min(data_filtered):.6f} à {np.max(data_filtered):.6f}")
                 print(f"    Mean:  {np.mean(data_filtered):.6f}")
                 print(f"    Std:   {np.std(data_filtered):.6f}")
+                print(f"\n  Temps de filtrage: {fin - debut:.2f} secondes")
                 
                 x = np.linspace(0, trace['num_samples'] / trace['sample_rate_hz'], 
                                num=trace['num_samples'])

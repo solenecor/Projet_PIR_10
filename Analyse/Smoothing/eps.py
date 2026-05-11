@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 from pathlib import Path
 from numpy.lib.stride_tricks import sliding_window_view
+import time
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -62,12 +63,15 @@ if __name__ == "__main__":
                 print(f"    Mean:  {np.mean(data_raw):.6f}")
                 print(f"    Std:   {np.std(data_raw):.6f}")
                 
+                debut = time.perf_counter()
                 data_filtered = eps(data_raw, window_size)
+                fin = time.perf_counter()
                 
                 print(f"\n  [FILTRÉES (EPS)]")
                 print(f"    Range: {np.min(data_filtered):.6f} à {np.max(data_filtered):.6f}")
                 print(f"    Mean:  {np.mean(data_filtered):.6f}")
                 print(f"    Std:   {np.std(data_filtered):.6f}")
+                print(f"\n  Temps de filtrage: {fin - debut:.2f} secondes")
                 
                 x = np.linspace(0, trace['num_samples'] / trace['sample_rate_hz'], 
                                num=trace['num_samples'])
