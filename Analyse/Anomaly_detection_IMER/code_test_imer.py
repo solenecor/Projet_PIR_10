@@ -7,6 +7,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')
 from Lecture_data.lecture_mseed import lecture_mseed
 from Analyse.Smoothing.eppf import eppf
 from Analyse.Smoothing.eps import eps
+script_dir = os.path.dirname(os.path.abspath(__file__))
+full_in_path = os.path.join(script_dir, "..", "..", "donnees_capteur1.mseed")
+from time import time
 
 import numpy as np
 ###ESSAYER D'AFFICHER PLUSIEURS EVENEMENTS DIFFERENTS
@@ -152,11 +155,25 @@ if __name__ == "__main__":
     # trace_brute = lecture_mseed("GUI_20230310_090649.mseed")[0]['data_samples']
     # fs    = lecture_mseed("GUI_20230310_090649.mseed")[0]['sample_rate_hz']
             #----------------------------------------------------
-    trace_brute = lecture_mseed("GUI_20240112_095041.mseed")[0]['data_samples']
-    fs    = lecture_mseed("GUI_20230310_090649.mseed")[0]['sample_rate_hz']       
-    print(f"Fréquence d'échantillonnage : {fs} Hz")
-    t     = np.arange(len(trace_brute)) / fs
-    trace = eps(trace_brute, window_size=5)
+    trace_file = "../data_node_1_part.mseed"
+    data_trace = lecture_mseed(full_in_path)
+    sample_rate = data_trace[0]["sample_rate_hz"]
+    trace_brute = data_trace[0]["data_samples"]
+    ns = int(0.1 * sample_rate)
+    nl = int(1 * sample_rate)
+    t     = np.arange(len(trace_brute)) / sample_rate
+    start = time()
+    for i in range(10):
+        curve, thresh, picks = compute_imer( trace_brute, sample_rate,snr_bas=False)  
+        if picks:
+            print(f"{len(picks)} pointé(s) détecté(s)") 
+        for i, p in enumerate(picks):
+            print(f"Pointé {i+1} : t = {t[p]:.4f} s ")
+        else:
+            print("Aucun pointé détecté.")  
+    print(f"moyenne :{(time()-start)/10}")
+    
+    
     
     # # -------------------------------------------------------------------------
     
@@ -185,7 +202,7 @@ if __name__ == "__main__":
     # persistance_ms = max(1000/fs, nt1_ms/20)     # ms de persistance pour valider un pointé
 
 
-    curve, thresh, picks = compute_imer( trace, fs,snr_bas=False)
+    
 
     
  
@@ -195,12 +212,7 @@ if __name__ == "__main__":
     #     n_avg=n_smth, persistance_ms=persistance_ms, snr_bas=False
     # )
 
-    if picks:
-        print(f"{len(picks)} pointé(s) détecté(s)") 
-        for i, p in enumerate(picks):
-            print(f"Pointé {i+1} : t = {t[p]:.4f} s ")
-    else:
-        print("Aucun pointé détecté.")
+    
 
 
     ## --- Affichage ---
