@@ -745,7 +745,10 @@ with st.container(height=2200):
     nx.draw_networkx(G, pos, with_labels=True, ax = ax, edgelist = aretes_filtrees)
     edge_labels = {k: round(v, 3) for k, v in nx.get_edge_attributes(G, 'weight').items() if v!=0}
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
-    st.pyplot(fig)
+    col_vide1, col_image, col_vide2 = st.columns([1, 2, 1]) 
+
+    with col_image:
+        st.pyplot(fig)
 
     # for type in data_types:
     #     if type in detection_times.keys():
