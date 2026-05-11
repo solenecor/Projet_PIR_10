@@ -11,7 +11,6 @@ full_in_path = os.path.join(script_dir, "..", "..", "donnees_capteur1.mseed")
 
 # règle "universal" pour lambda
 def wavelet_transform(signal, wavelet_type, decomposition_level):
-    start = time.time()
 
     # Décomposition (db1 = Daubechies d'ordre 1 = Haar)
     coeffs = pywt.wavedec(signal, wavelet=wavelet_type, level=decomposition_level) # liste de tableaux de la forme [cA_N, cD_N, cD_N-1, ..., cD_1] avec cA_i coef d'approx niveau max (basses freq -> laisse intact) et cD_i coef de détail niveau i
@@ -38,7 +37,6 @@ def wavelet_transform(signal, wavelet_type, decomposition_level):
     # Reconstruction
     denoised_signal = pywt.waverec(coeffs_denoised, wavelet=wavelet_type)
 
-    print(time.time() - start)
     return denoised_signal
 
 
@@ -46,5 +44,9 @@ if __name__ == "__main__":
     trace_file = "../data_node_1_part.mseed"
     data_trace = lecture_mseed(full_in_path)
     raw_trace = data_trace[0]["data_samples"]
+
+    start = time.time()
     for i in range(10):
         wavelet_transform(raw_trace, 'haar', 5)
+    print((time.time() - start)/10)
+
