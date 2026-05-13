@@ -19,7 +19,7 @@ def choix_clustering(choix) :
     Sorties :
         fct : fonction
     """
-    possibilites = ("Weighted visibility graph", "Norme L1", "Norme L2", "Dynamic Time Warping")
+    possibilites = ("Weighted visibility graph", "Norm L1", "Norm L2", "Dynamic Time Warping")
     fonctions = (clustering_visibility_graph, clustering_distance_dtw, clustering_distance_L1, clustering_distance_L2)
 
     fct = fonctions[possibilites.index(choix)]
