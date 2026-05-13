@@ -31,18 +31,18 @@ def run_sta_lta_and_export(trace, sample_rate, start_time, wait_time, ns, nl, th
 
     # 4. Écriture / Ajout dans l'Excel
     if not os.path.exists(filepath):
-        df_new.to_excel(filepath, index=False, sheet_name="Résultats_STA_LTA")
+        df_new.to_excel(filepath, index=False, sheet_name="Résultats_EPS3")
     else:
         with pd.ExcelWriter(filepath, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
             try:
-                existing_df = pd.read_excel(filepath, sheet_name="Résultats_STA_LTA")
+                existing_df = pd.read_excel(filepath, sheet_name="Résultats_EPS3")
                 start_row = len(existing_df) + 1
                 header = False
             except Exception:
                 start_row = 0
                 header = True
             
-            df_new.to_excel(writer, index=False, header=header, sheet_name="Résultats_STA_LTA", startrow=start_row)
+            df_new.to_excel(writer, index=False, header=header, sheet_name="Résultats_EPS3", startrow=start_row)
 
     # Affichage console clair pour l'utilisateur
     print(f"   [STA={ns/sample_rate}s, LTA={nl/sample_rate}s, Seuil={threshold}] -> {len(det_indexes)} détections.")

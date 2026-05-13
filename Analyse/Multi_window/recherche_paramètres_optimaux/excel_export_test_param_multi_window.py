@@ -2,7 +2,10 @@ import pandas as pd
 import os
 from datetime import timedelta
 from openpyxl import load_workbook
-# Assure-toi que le nom du fichier importé correspond au tien
+import sys
+import os
+# Pour trouver un fichier qui n'est pas sous le dossier actuel
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 from Analyse.Multi_window.implementation import detection_multi_window
 
 def fmt_time(dt):
@@ -40,19 +43,19 @@ def run_multi_window_and_export(trace, sample_rate, start_time, wait_time, m, n,
     # 4. Écriture / Ajout dans l'Excel
     if not os.path.exists(filepath):
         # Création du fichier s'il n'existe pas
-        df_new.to_excel(filepath, index=False, sheet_name="results")
+        df_new.to_excel(filepath, index=False, sheet_name="Résultats_raw_trace")
     else:
         # Ajout à la suite dans le fichier existant
         with pd.ExcelWriter(filepath, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
             try:
-                existing_df = pd.read_excel(filepath, sheet_name="results")
+                existing_df = pd.read_excel(filepath, sheet_name="Résultats_raw_trace")
                 start_row = len(existing_df) + 1
                 header = False
             except Exception:
                 start_row = 0
                 header = True
             
-            df_new.to_excel(writer, index=False, header=header, sheet_name="results", startrow=start_row)
+            df_new.to_excel(writer, index=False, header=header, sheet_name="Résultats_raw_trace", startrow=start_row)
 
     # Affichage console pour suivi
     print(f"   [BTA={m}, shift={p}, ATA={n}, DTA={q}, delay={d}] -> {len(det_indexes)} détections.")

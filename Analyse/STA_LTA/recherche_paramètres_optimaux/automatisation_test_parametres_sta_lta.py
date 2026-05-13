@@ -11,15 +11,15 @@ from Analyse.Smoothing.eppf import eppf
 
 # 1. Chargement des données
 script_dir = os.path.dirname(os.path.abspath(__file__))
-full_in_path = os.path.join(script_dir, "..", "..", "..", "donnees_capteur1.mseed")
+full_in_path = os.path.join(script_dir, "..", "..", "..", "donnees_capteur2.mseed")
 data_trace = lecture_mseed(full_in_path)
 
 fs = data_trace[0]["sample_rate_hz"]
 start_dt = datetime.strptime(data_trace[0]["start_time"].rstrip("Z"), "%Y-%m-%dT%H:%M:%S")
 
 # 2. Fenêtrage
-window_start = datetime(2026, 5, 5, 10, 0, 35)
-window_end   = datetime(2026, 5, 5, 10, 6, 15)
+window_start = datetime(2026, 5, 5, 10, 1, 0)
+window_end   = datetime(2026, 5, 5, 10, 6, 50)
 
 idx_start = int((window_start - start_dt).total_seconds() * fs)
 idx_end   = int((window_end   - start_dt).total_seconds() * fs)
@@ -31,7 +31,7 @@ lta_seconds = [1, 5, 10, 15, 20, 30]
 thresholds  = [2, 3, 4]
 wait_time   = 5
 
-denoised_trace = eppf(raw_trace, 6, 2)
+denoised_trace = eps(raw_trace, 3)
 
 print(f"Démarrage")
 
@@ -53,7 +53,7 @@ for s_sec in sta_seconds:
                     ns          = ns,
                     nl          = nl,
                     threshold   = th,
-                    filepath    = "comparatif_param_STA_LTA.xlsx"
+                    filepath    = "comparatif_param_STA_LTA_trace2.xlsx"
                 )
 
 print("Terminé")
